@@ -338,7 +338,6 @@
             <div id="onlineLobby" class="hidden google-card p-6 mb-6 text-center">
                 <h3 class="text-sm font-bold mb-4 text-[#1a73e8] tracking-wide uppercase">Multiplayer Online</h3>
                 
-                <!-- NEW GLOBAL MATCHMAKING BUTTON -->
                 <button id="btnGlobalMatch" onclick="startGlobalMatchmaking()" class="w-full bg-[#1a73e8] text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 mb-4 flex items-center justify-center gap-3">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm-1,17.93c-3.95-.49-7-3.85-7-7.93,0-.62,.08-1.21,.21-1.79l4.79,4.79v1h2v1.93Zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55,0,1-.45,1-1V7h2c1.1,0,2-.9,2-2v-.41c2.93,1.19,5,4.06,5,7.41,0,2.08-.8,3.97-2.1,5.39Z"/></svg>
                     CARI LAWAN GLOBAL
@@ -465,13 +464,24 @@
                 </div>
 
                 <div class="flex-1 overflow-y-auto pr-1" id="leaderboardList">
-                    <!-- List items loaded here -->
                     <div class="py-10 text-gray-400 text-xs uppercase font-bold tracking-widest loading-dots">Memuat</div>
                 </div>
 
                 <div class="mt-4 pt-4 border-t shrink-0">
                     <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Hanya kemenangan Online yang dihitung</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- ERROR / NOTIFICATION MODAL (KUSTOM) -->
+        <div id="alertModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-[70] p-6">
+            <div class="google-card p-8 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl" id="alertModalContent">
+                <div class="w-16 h-16 bg-[#e8f0fe] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg id="alertIcon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#1a73e8]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h2 id="alertTitle" class="text-lg font-extrabold mb-2 text-[#1f1f1f] uppercase">INFO</h2>
+                <p id="alertMessage" class="text-xs text-[#5f6368] mb-8 font-medium">Pesan kustom di sini.</p>
+                <button onclick="closeAlertModal()" class="w-full bg-[#1a73e8] text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">MENGERTI</button>
             </div>
         </div>
 
@@ -525,12 +535,11 @@
             else if (type === 'win') { osc.type = 'triangle'; [523, 659, 783].forEach((f, i) => osc.frequency.setValueAtTime(f, now + i * 0.1)); gain.gain.setValueAtTime(0.2, now); osc.start(); osc.stop(now + 0.4); }
             else if (type === 'draw') { osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); gain.gain.setValueAtTime(0.2, now); osc.start(); osc.stop(now + 0.3); }
         };
-        const startBGM = () => { if (isMuted || !audioCtx || bgmSource) return; bgmSource = true; };
 
         window.toggleMute = () => {
             isMuted = !isMuted; const svg = document.getElementById('svg-speaker');
             if (isMuted) svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />';
-            else { initAudio(); startBGM(); svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />'; }
+            else { initAudio(); svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />'; }
         };
 
         // --- GAME STATE ---
@@ -571,6 +580,19 @@
         async function initAuth() { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); }
         onAuthStateChanged(auth, async (user) => { if (user) { userId = user.uid; const s = document.getElementById('connectionStatus'); if (s) s.innerText = "Server: Online (" + userId.substring(0,4) + ")"; await loadUserProfile(); } });
         initAuth();
+
+        // --- CUSTOM ALERT MODAL LOGIC ---
+        window.showErrorModal = (title, message) => {
+            document.getElementById('alertTitle').innerText = title;
+            document.getElementById('alertMessage').innerText = message;
+            const modal = document.getElementById('alertModal');
+            modal.classList.replace('hidden', 'flex');
+            setTimeout(() => document.getElementById('alertModalContent').classList.replace('scale-90', 'scale-100'), 10);
+        };
+        window.closeAlertModal = () => {
+            document.getElementById('alertModalContent').classList.replace('scale-100', 'scale-90');
+            setTimeout(() => document.getElementById('alertModal').classList.replace('flex', 'hidden'), 200);
+        };
 
         // --- PROFILE & LEADERBOARD SYNC ---
         async function loadUserProfile() {
@@ -669,7 +691,6 @@
                         <div class="text-[11px] font-bold text-[#1f1f1f] truncate w-24">${p.name} ${p.id === userId ? '<span class="text-[8px] text-blue-500 ml-1">(ANDA)</span>' : ''}</div>
                         <div class="text-[9px] text-gray-400 font-medium uppercase tracking-tighter">${p.totalWins} Kemenangan</div>
                     </div>
-                    ${idx < 3 ? `<div class="text-lg">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>` : ''}
                 `;
                 list.appendChild(item);
             });
@@ -727,14 +748,21 @@
         window.changeGrid = (size) => { initAudio(); playSFX('click'); if (currentRoomId) return; gridSize = size; board = Array(size * size).fill(''); [3,4,5].forEach(v => { const b = document.getElementById(`grid${v}`); b.className = (v === size) ? "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#1a73e8] text-white shadow-sm transition-all" : "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#ffffff] text-[#444746] border border-[#e0e0e0] shadow-sm transition-all"; }); resetGame(); };
 
         window.setMode = async (mode) => {
-            initAudio(); playSFX('click'); startBGM();
-            if (gameMode === 'online' && currentRoomId && mySymbol === 'X') { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId)); } catch(e) {} }
+            initAudio(); playSFX('click');
+            // OTOMATIS BUBAR JIKA SEDANG DI ROOM
+            if (currentRoomId) { 
+                try { 
+                    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
+                    const snap = await getDoc(roomRef);
+                    if (snap.exists()) await deleteDoc(roomRef);
+                } catch(e) {} 
+            }
             if (unsubscribeRoom) unsubscribeRoom(); if (unsubscribeChat) unsubscribeChat();
             resetScores(); gameMode = mode; currentRoomId = null; mySymbol = null;
             ['pvp', 'pve', 'online'].forEach(m => { const b = document.getElementById('btn' + m.charAt(0).toUpperCase() + m.slice(1)); b.className = (m === mode) ? "mode-tab active" : "mode-tab"; });
             aiLevelContainer.classList.toggle('hidden', mode !== 'pve'); 
             onlineLobby.classList.toggle('hidden', mode !== 'online');
-            document.getElementById('searchingOverlay').classList.add('hidden'); // Reset searching
+            document.getElementById('searchingOverlay').classList.add('hidden');
             boardElement.parentElement.parentElement.classList.toggle('hidden', mode === 'online'); document.getElementById('statusControlArea').classList.toggle('hidden', mode === 'online');
             onlineRoomBadge.classList.add('hidden'); gridSelectorContainer.classList.remove('hidden'); document.getElementById('chatPanel').classList.remove('open');
             updateProfileUI(); resetGame();
@@ -776,97 +804,67 @@
 
         // --- ONLINE LOGIC ---
         window.createNewRoom = async () => {
-            initAudio(); playSFX('click'); startBGM(); if (!userId) return;
+            initAudio(); playSFX('click'); if (!userId) return;
             const rid = Math.random().toString(36).substring(2, 8).toUpperCase(); currentRoomId = rid; mySymbol = 'X';
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { board: Array(gridSize * gridSize).fill(''), gridSize, currentPlayer: 'X', players: { X: userId, O: null }, playerData: { X: { name: userProfile.name, avatar: userProfile.avatar }, O: null }, status: 'waiting', winner: null, winningLine: null, scores: { X: 0, O: 0, draw: 0 } });
             gridSelectorContainer.classList.add('hidden'); startRoomListener(rid);
         };
 
         window.joinRoom = async () => {
-            initAudio(); playSFX('click'); startBGM(); const rid = document.getElementById('roomInput').value.trim().toUpperCase(); if (!rid || !userId) return;
-            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid)); if (!snap.exists()) return alert("Room tidak ditemukan!");
-            const data = snap.data(); if (data.players.O && data.players.O !== userId) return alert("Room penuh!");
+            initAudio(); playSFX('click'); const rid = document.getElementById('roomInput').value.trim().toUpperCase(); if (!rid || !userId) return;
+            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid)); 
+            
+            // PENGGUNAAN NOTIF KUSTOM UNTUK ROOM TIDAK DITEMUKAN
+            if (!snap.exists()) return showErrorModal("ERROR", "Room ID tidak ditemukan. Periksa kembali kode Anda!");
+            
+            const data = snap.data(); 
+            // PENGGUNAAN NOTIF KUSTOM UNTUK ROOM PENUH
+            if (data.players.O && data.players.O !== userId) return showErrorModal("PENUH", "Maaf, room ini sudah penuh oleh pemain lain!");
+            
             if (!data.players.O && data.players.X !== userId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { "players.O": userId, "playerData.O": { name: userProfile.name, avatar: userProfile.avatar }, status: 'playing' });
             currentRoomId = rid; mySymbol = data.players.X === userId ? 'X' : 'O'; gridSelectorContainer.classList.add('hidden'); startRoomListener(rid);
         };
 
-        // --- GLOBAL MATCHMAKING FEATURE ---
         window.startGlobalMatchmaking = async () => {
-            initAudio(); playSFX('click'); startBGM(); if (!userId) return;
-            
-            onlineLobby.classList.add('hidden');
-            document.getElementById('searchingOverlay').classList.remove('hidden');
-
-            const matchmakingQuery = query(
-                collection(db, 'artifacts', appId, 'public', 'data', 'rooms'),
-                where('status', '==', 'waiting'),
-                where('isGlobal', '==', true),
-                limit(1)
-            );
-
+            initAudio(); playSFX('click'); if (!userId) return;
+            onlineLobby.classList.add('hidden'); document.getElementById('searchingOverlay').classList.remove('hidden');
+            const matchmakingQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), where('status', '==', 'waiting'), where('isGlobal', '==', true), limit(1));
             const querySnap = await getDocs(matchmakingQuery);
             if (!querySnap.empty) {
-                // Bergabung ke room yang sudah ada
-                const roomDoc = querySnap.docs[0];
-                const rid = roomDoc.id;
-                const data = roomDoc.data();
+                const roomDoc = querySnap.docs[0]; const rid = roomDoc.id; const data = roomDoc.data();
                 if (data.players.X !== userId) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { 
-                        "players.O": userId, 
-                        "playerData.O": { name: userProfile.name, avatar: userProfile.avatar }, 
-                        status: 'playing' 
-                    });
-                    currentRoomId = rid;
-                    mySymbol = 'O';
-                    document.getElementById('searchingOverlay').classList.add('hidden');
-                    startRoomListener(rid);
-                } else {
-                    // Jika ini room kita sendiri yang sedang menunggu
-                    currentRoomId = rid;
-                    mySymbol = 'X';
-                    startRoomListener(rid);
-                }
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { "players.O": userId, "playerData.O": { name: userProfile.name, avatar: userProfile.avatar }, status: 'playing' });
+                    currentRoomId = rid; mySymbol = 'O'; document.getElementById('searchingOverlay').classList.add('hidden'); startRoomListener(rid);
+                } else { currentRoomId = rid; mySymbol = 'X'; startRoomListener(rid); }
             } else {
-                // Buat room global baru
-                const rid = "GLB-" + Math.random().toString(36).substring(2, 6).toUpperCase();
-                currentRoomId = rid;
-                mySymbol = 'X';
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { 
-                    board: Array(gridSize * gridSize).fill(''), 
-                    gridSize, 
-                    currentPlayer: 'X', 
-                    players: { X: userId, O: null }, 
-                    playerData: { X: { name: userProfile.name, avatar: userProfile.avatar }, O: null }, 
-                    status: 'waiting', 
-                    winner: null, 
-                    winningLine: null, 
-                    scores: { X: 0, O: 0, draw: 0 },
-                    isGlobal: true 
-                });
+                const rid = "GLB-" + Math.random().toString(36).substring(2, 6).toUpperCase(); currentRoomId = rid; mySymbol = 'X';
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { board: Array(gridSize * gridSize).fill(''), gridSize, currentPlayer: 'X', players: { X: userId, O: null }, playerData: { X: { name: userProfile.name, avatar: userProfile.avatar }, O: null }, status: 'waiting', winner: null, winningLine: null, scores: { X: 0, O: 0, draw: 0 }, isGlobal: true });
                 startRoomListener(rid);
             }
         };
 
         window.cancelMatchmaking = async () => {
-            if (currentRoomId) {
-                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId)); } catch(e) {}
-            }
+            if (currentRoomId) { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId)); } catch(e) {} }
             setMode('online');
         };
 
         function startRoomListener(rid) {
-            onlineLobby.classList.add('hidden'); 
-            document.getElementById('searchingOverlay').classList.add('hidden');
-            boardElement.parentElement.parentElement.classList.remove('hidden'); 
-            document.getElementById('statusControlArea').classList.remove('hidden'); 
-            onlineRoomBadge.classList.remove('hidden');
+            onlineLobby.classList.add('hidden'); document.getElementById('searchingOverlay').classList.add('hidden');
+            boardElement.parentElement.parentElement.classList.remove('hidden'); document.getElementById('statusControlArea').classList.remove('hidden'); onlineRoomBadge.classList.remove('hidden');
             document.getElementById('displayRoomId').innerText = rid;
 
             unsubscribeRoom = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), (snap) => {
-                if (!snap.exists()) { setMode('pvp'); return; }
+                // LOGIKA ROOM BUBAR: Snap tidak ada berarti dihapus pemain lawan
+                if (!snap.exists()) {
+                    if (currentRoomId) {
+                        currentRoomId = null; 
+                        showErrorModal("ROOM BUBAR", "Lawan telah meninggalkan permainan. Room otomatis ditutup.");
+                        setMode('online');
+                    }
+                    return; 
+                }
+
                 const data = snap.data(); 
-                
-                // Jika sedang global matchmaking, tampilkan overlay searching sampai statusnya 'playing'
                 if (data.isGlobal && data.status === 'waiting') {
                     document.getElementById('searchingOverlay').classList.remove('hidden');
                     boardElement.parentElement.parentElement.classList.add('hidden');
@@ -891,6 +889,8 @@
                         incrementLeaderboardWins();
                     }
                 } else if (data.status === 'playing') closeModal();
+            }, (error) => {
+                console.error("Room listener error:", error);
             });
 
             unsubscribeChat = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', rid, 'messages'), (snap) => {
@@ -922,8 +922,9 @@
         };
         window.toggleChat = () => { const panel = document.getElementById('chatPanel'); const isOpen = panel.classList.toggle('open'); if (isOpen) document.getElementById('chatDot').classList.add('hidden'); playSFX('click'); };
         window.copyRoomId = () => { playSFX('click'); const t = document.getElementById('displayRoomId').innerText, el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); const toast = document.getElementById('toast'); toast.style.opacity = '1'; setTimeout(() => toast.style.opacity = '0', 2000); };
+        
         window.onload = () => { initBoard(); updateTurnUI(); updateScoreBoard(); };
-        window.addEventListener('click', () => { if (!audioCtx) { initAudio(); startBGM(); } }, { once: true });
+        window.addEventListener('click', () => { if (!audioCtx) initAudio(); }, { once: true });
         document.getElementById('chatInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
     </script>
 </body>
