@@ -305,13 +305,9 @@
             <!-- BOTTOM CONTROLS -->
             <div class="mt-auto flex items-center gap-4">
                 <div id="controls" class="flex flex-1 gap-3">
-                    <button onclick="resetGame()" class="flex-1 bg-[#1f1f1f] text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">
+                    <!-- TRASH ICON REMOVED AS REQUESTED -->
+                    <button onclick="requestReset()" class="flex-1 bg-[#1f1f1f] text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">
                         Ulangi
-                    </button>
-                    <button onclick="resetScores()" class="bg-[#ffffff] border border-[#e0e0e0] text-[#5f6368] p-4 rounded-2xl shadow-sm transition-all active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
                     </button>
                 </div>
                 
@@ -328,7 +324,7 @@
             </div>
         </div>
 
-        <!-- MODAL -->
+        <!-- WIN MODAL -->
         <div id="statusModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-50 p-6">
             <div class="google-card p-10 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl" id="modalContent">
                 <div class="w-16 h-16 bg-[#e8f0fe] rounded-full flex items-center justify-center mx-auto mb-6">
@@ -339,6 +335,25 @@
                 <button onclick="handlePlayAgain()" class="w-full bg-[#1a73e8] hover:bg-[#174ea6] text-white font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-95 text-sm uppercase tracking-widest">
                     Main Lagi
                 </button>
+            </div>
+        </div>
+
+        <!-- RESET CONFIRMATION MODAL -->
+        <div id="resetConfirmModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-50 p-6">
+            <div class="google-card p-8 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl" id="resetModalContent">
+                <div class="w-16 h-16 bg-[#fce8e6] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#d93025]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h2 class="text-xl font-extrabold mb-2 text-[#1f1f1f] uppercase">ULANGI GAME?</h2>
+                <p class="text-xs text-[#5f6368] mb-8 font-medium">Papan akan dikosongkan. Tindakan ini tidak dapat dibatalkan.</p>
+                <div class="flex flex-col gap-3">
+                    <button onclick="confirmReset()" class="w-full bg-[#d93025] text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">
+                        YA, ULANGI
+                    </button>
+                    <button onclick="closeResetModal()" class="w-full bg-white border border-gray-200 text-[#5f6368] font-bold py-4 rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-widest">
+                        BATAL
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -408,7 +423,6 @@
         let gridSize = 3, board = Array(9).fill(''), currentPlayer = 'X', gameActive = true, gameMode = 'pvp', aiDifficulty = 'easy', scores = { X: 0, O: 0, draw: 0 };
         let db, auth, userId, currentRoomId = null, mySymbol = null, unsubscribeRoom = null, unsubscribeChat = null;
         
-        // --- UPDATED FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyAiknTiGhLeeZREUy5CJQ6Gq8O0FSXWYh8",
             authDomain: "tictactoe-ultra.firebaseapp.com",
@@ -558,6 +572,35 @@
             if (gameMode === 'online' && currentRoomId) {
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: Array(gridSize * gridSize).fill(''), currentPlayer: 'X', winner: null, winningLine: null, status: 'playing' });
             } else { resetGame(); }
+        };
+
+        // --- RESET WARNING LOGIC ---
+        const resetConfirmModal = document.getElementById('resetConfirmModal');
+        const resetModalContent = document.getElementById('resetModalContent');
+
+        window.requestReset = () => {
+            initAudio(); playSFX('click');
+            resetConfirmModal.classList.remove('hidden');
+            resetConfirmModal.classList.add('flex');
+            setTimeout(() => resetModalContent.classList.replace('scale-90', 'scale-100'), 10);
+        };
+
+        window.closeResetModal = () => {
+            playSFX('click');
+            resetModalContent.classList.replace('scale-100', 'scale-90');
+            setTimeout(() => {
+                resetConfirmModal.classList.add('hidden');
+                resetConfirmModal.classList.remove('flex');
+            }, 200);
+        };
+
+        window.confirmReset = async () => {
+            closeResetModal();
+            if (gameMode === 'online' && currentRoomId) {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: Array(gridSize * gridSize).fill(''), currentPlayer: 'X', winner: null, winningLine: null, status: 'playing' });
+            } else {
+                resetGame();
+            }
         };
 
         window.resetGame = () => { board = Array(gridSize * gridSize).fill(''); currentPlayer = 'X'; gameActive = true; updateTurnUI(); initBoard(); };
