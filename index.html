@@ -226,6 +226,16 @@
             height: 24px;
             color: #5f6368;
         }
+
+        /* SEARCHING PULSE */
+        .pulse-searching {
+            animation: pulse-ring 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(26, 115, 232, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
+        }
     </style>
 </head>
 <body>
@@ -327,21 +337,39 @@
             <!-- LOBBY -->
             <div id="onlineLobby" class="hidden google-card p-6 mb-6 text-center">
                 <h3 class="text-sm font-bold mb-4 text-[#1a73e8] tracking-wide uppercase">Multiplayer Online</h3>
+                
+                <!-- NEW GLOBAL MATCHMAKING BUTTON -->
+                <button id="btnGlobalMatch" onclick="startGlobalMatchmaking()" class="w-full bg-[#1a73e8] text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 mb-4 flex items-center justify-center gap-3">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm-1,17.93c-3.95-.49-7-3.85-7-7.93,0-.62,.08-1.21,.21-1.79l4.79,4.79v1h2v1.93Zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55,0,1-.45,1-1V7h2c1.1,0,2-.9,2-2v-.41c2.93,1.19,5,4.06,5,7.41,0,2.08-.8,3.97-2.1,5.39Z"/></svg>
+                    CARI LAWAN GLOBAL
+                </button>
+
+                <div class="flex items-center gap-3 px-2 mb-4">
+                    <div class="h-[1px] bg-[#e0e0e0] flex-1"></div>
+                    <span class="text-[10px] font-bold text-[#5f6368] uppercase">Main via Kode</span>
+                    <div class="h-[1px] bg-[#e0e0e0] flex-1"></div>
+                </div>
+
                 <div class="space-y-4">
-                    <button onclick="createNewRoom()" class="w-full bg-[#1a73e8] hover:bg-[#174ea6] text-white font-bold py-3.5 rounded-2xl shadow-md transition-all active:scale-95">
+                    <button onclick="createNewRoom()" class="w-full bg-[#ffffff] border-2 border-[#1a73e8] text-[#1a73e8] font-bold py-3 rounded-2xl shadow-sm transition-all active:scale-95">
                         Buat Room Baru
                     </button>
-                    <div class="flex items-center gap-3 px-2">
-                        <div class="h-[1px] bg-[#e0e0e0] flex-1"></div>
-                        <span class="text-[10px] font-bold text-[#5f6368] uppercase">Atau</span>
-                        <div class="h-[1px] bg-[#e0e0e0] flex-1"></div>
-                    </div>
                     <div class="flex gap-2">
                         <input type="text" id="roomInput" placeholder="Kode Room" class="flex-1 bg-[#f1f3f4] border border-transparent rounded-2xl px-4 py-3 text-[#1f1f1f] font-bold uppercase text-center outline-none focus:bg-white focus:border-[#1a73e8] text-xs tracking-widest transition-all">
                         <button onclick="joinRoom()" class="bg-[#1f1f1f] hover:bg-[#000000] text-white font-bold px-6 rounded-2xl transition-all text-xs">Join</button>
                     </div>
                 </div>
                 <p id="connectionStatus" class="mt-4 text-[9px] text-[#5f6368] font-medium uppercase tracking-widest">Server: Menghubungkan...</p>
+            </div>
+
+            <!-- SEARCHING OVERLAY -->
+            <div id="searchingOverlay" class="hidden google-card p-8 mb-6 text-center flex flex-col items-center justify-center py-12">
+                <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6 pulse-searching">
+                    <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <h3 class="text-lg font-black text-gray-800 uppercase tracking-tight mb-1">Mencari Lawan...</h3>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-8">Mohon tunggu sebentar</p>
+                <button onclick="cancelMatchmaking()" class="px-8 py-3 rounded-full border border-gray-200 text-gray-600 text-xs font-bold uppercase tracking-widest active:scale-90 transition-all">Batal</button>
             </div>
 
             <!-- BOARD CONTAINER -->
@@ -423,7 +451,7 @@
             </div>
         </div>
 
-        <!-- LEADERBOARD MODAL (NEW) -->
+        <!-- LEADERBOARD MODAL -->
         <div id="leaderboardModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
             <div class="google-card p-6 w-full max-w-sm text-center scale-90 transition-transform duration-300 shadow-2xl flex flex-col max-h-[80dvh]" id="leaderboardModalContent">
                 <div class="flex items-center justify-between mb-6 shrink-0">
@@ -485,7 +513,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc, collection, addDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc, collection, addDoc, increment, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- AUDIO ---
         let audioCtx = null, isMuted = false, bgmSource = null;
@@ -508,7 +536,7 @@
         // --- GAME STATE ---
         let gridSize = 3, board = Array(9).fill(''), currentPlayer = 'X', gameActive = true, gameMode = 'pvp', aiDifficulty = 'easy', scores = { X: 0, O: 0, draw: 0 };
         let db, auth, userId, currentRoomId = null, mySymbol = null, unsubscribeRoom = null, unsubscribeChat = null;
-        let onlineWinCounted = false; // Flag to prevent double win counting locally
+        let onlineWinCounted = false; 
         
         const avatarOptions = [
             null,
@@ -570,7 +598,6 @@
         }
 
         async function updateLeaderboardEntry() {
-            // Path Strict Rule 1: /artifacts/{appId}/public/data/{collectionName}
             const lbRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', userId);
             await setDoc(lbRef, { name: userProfile.name, avatar: userProfile.avatar, totalWins: userProfile.totalWins || 0 }, { merge: true });
         }
@@ -617,12 +644,10 @@
             document.getElementById('leaderboardModal').classList.replace('hidden', 'flex');
             setTimeout(() => document.getElementById('leaderboardModalContent').classList.replace('scale-90', 'scale-100'), 10);
             
-            // Start real-time listener for leaderboard
             const lbCol = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
             onSnapshot(lbCol, (snap) => {
                 const players = [];
                 snap.forEach(d => players.push({ id: d.id, ...d.data() }));
-                // Local sort (Rule 2: No complex queries)
                 players.sort((a,b) => b.totalWins - a.totalWins);
                 renderLeaderboard(players);
             }, (err) => console.error("Leaderboard fail:", err));
@@ -634,9 +659,7 @@
             players.forEach((p, idx) => {
                 const item = document.createElement('div');
                 item.className = `flex items-center gap-3 p-3 mb-2 rounded-2xl ${p.id === userId ? 'bg-blue-50 border border-blue-100' : 'bg-[#f8f9fa]'}`;
-                
                 const rankColor = idx === 0 ? 'text-[#f9ab00]' : idx === 1 ? 'text-[#9e9e9e]' : idx === 2 ? 'text-[#cd7f32]' : 'text-gray-400';
-                
                 item.innerHTML = `
                     <div class="w-6 text-xs font-black ${rankColor}">${idx + 1}</div>
                     <div class="w-8 h-8 rounded-full overflow-hidden bg-white border border-gray-200 flex items-center justify-center shrink-0">
@@ -709,7 +732,9 @@
             if (unsubscribeRoom) unsubscribeRoom(); if (unsubscribeChat) unsubscribeChat();
             resetScores(); gameMode = mode; currentRoomId = null; mySymbol = null;
             ['pvp', 'pve', 'online'].forEach(m => { const b = document.getElementById('btn' + m.charAt(0).toUpperCase() + m.slice(1)); b.className = (m === mode) ? "mode-tab active" : "mode-tab"; });
-            aiLevelContainer.classList.toggle('hidden', mode !== 'pve'); onlineLobby.classList.toggle('hidden', mode !== 'online');
+            aiLevelContainer.classList.toggle('hidden', mode !== 'pve'); 
+            onlineLobby.classList.toggle('hidden', mode !== 'online');
+            document.getElementById('searchingOverlay').classList.add('hidden'); // Reset searching
             boardElement.parentElement.parentElement.classList.toggle('hidden', mode === 'online'); document.getElementById('statusControlArea').classList.toggle('hidden', mode === 'online');
             onlineRoomBadge.classList.add('hidden'); gridSelectorContainer.classList.remove('hidden'); document.getElementById('chatPanel').classList.remove('open');
             updateProfileUI(); resetGame();
@@ -765,12 +790,94 @@
             currentRoomId = rid; mySymbol = data.players.X === userId ? 'X' : 'O'; gridSelectorContainer.classList.add('hidden'); startRoomListener(rid);
         };
 
+        // --- GLOBAL MATCHMAKING FEATURE ---
+        window.startGlobalMatchmaking = async () => {
+            initAudio(); playSFX('click'); startBGM(); if (!userId) return;
+            
+            onlineLobby.classList.add('hidden');
+            document.getElementById('searchingOverlay').classList.remove('hidden');
+
+            const matchmakingQuery = query(
+                collection(db, 'artifacts', appId, 'public', 'data', 'rooms'),
+                where('status', '==', 'waiting'),
+                where('isGlobal', '==', true),
+                limit(1)
+            );
+
+            const querySnap = await getDocs(matchmakingQuery);
+            if (!querySnap.empty) {
+                // Bergabung ke room yang sudah ada
+                const roomDoc = querySnap.docs[0];
+                const rid = roomDoc.id;
+                const data = roomDoc.data();
+                if (data.players.X !== userId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { 
+                        "players.O": userId, 
+                        "playerData.O": { name: userProfile.name, avatar: userProfile.avatar }, 
+                        status: 'playing' 
+                    });
+                    currentRoomId = rid;
+                    mySymbol = 'O';
+                    document.getElementById('searchingOverlay').classList.add('hidden');
+                    startRoomListener(rid);
+                } else {
+                    // Jika ini room kita sendiri yang sedang menunggu
+                    currentRoomId = rid;
+                    mySymbol = 'X';
+                    startRoomListener(rid);
+                }
+            } else {
+                // Buat room global baru
+                const rid = "GLB-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+                currentRoomId = rid;
+                mySymbol = 'X';
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { 
+                    board: Array(gridSize * gridSize).fill(''), 
+                    gridSize, 
+                    currentPlayer: 'X', 
+                    players: { X: userId, O: null }, 
+                    playerData: { X: { name: userProfile.name, avatar: userProfile.avatar }, O: null }, 
+                    status: 'waiting', 
+                    winner: null, 
+                    winningLine: null, 
+                    scores: { X: 0, O: 0, draw: 0 },
+                    isGlobal: true 
+                });
+                startRoomListener(rid);
+            }
+        };
+
+        window.cancelMatchmaking = async () => {
+            if (currentRoomId) {
+                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId)); } catch(e) {}
+            }
+            setMode('online');
+        };
+
         function startRoomListener(rid) {
-            onlineLobby.classList.add('hidden'); boardElement.parentElement.parentElement.classList.remove('hidden'); document.getElementById('statusControlArea').classList.remove('hidden'); onlineRoomBadge.classList.remove('hidden');
+            onlineLobby.classList.add('hidden'); 
+            document.getElementById('searchingOverlay').classList.add('hidden');
+            boardElement.parentElement.parentElement.classList.remove('hidden'); 
+            document.getElementById('statusControlArea').classList.remove('hidden'); 
+            onlineRoomBadge.classList.remove('hidden');
             document.getElementById('displayRoomId').innerText = rid;
+
             unsubscribeRoom = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), (snap) => {
                 if (!snap.exists()) { setMode('pvp'); return; }
-                const data = snap.data(); board = data.board; gridSize = data.gridSize; currentPlayer = data.currentPlayer; gameActive = data.status !== 'finished'; if (data.scores) scores = data.scores;
+                const data = snap.data(); 
+                
+                // Jika sedang global matchmaking, tampilkan overlay searching sampai statusnya 'playing'
+                if (data.isGlobal && data.status === 'waiting') {
+                    document.getElementById('searchingOverlay').classList.remove('hidden');
+                    boardElement.parentElement.parentElement.classList.add('hidden');
+                    document.getElementById('statusControlArea').classList.add('hidden');
+                } else {
+                    document.getElementById('searchingOverlay').classList.add('hidden');
+                    boardElement.parentElement.parentElement.classList.remove('hidden');
+                    document.getElementById('statusControlArea').classList.remove('hidden');
+                }
+
+                board = data.board; gridSize = data.gridSize; currentPlayer = data.currentPlayer; gameActive = data.status !== 'finished'; if (data.scores) scores = data.scores;
                 const pX = data.playerData.X || { name: 'Pemain X', avatar: null }; const pO = data.playerData.O || { name: 'Menunggu...', avatar: null };
                 document.getElementById('labelX').innerText = pX.name; updateAvatarDisplay('X', pX.avatar);
                 document.getElementById('labelO').innerText = pO.name; updateAvatarDisplay('O', pO.avatar);
@@ -779,14 +886,13 @@
                 if (data.status === 'finished') {
                     if (data.winner && data.winner !== 'draw') { drawWinningLine(data.winningLine); playSFX('win'); } else playSFX('draw');
                     showModal(data.winner === 'draw' ? "HASIL SERI" : (data.winner === mySymbol ? "ANDA MENANG!" : "ANDA KALAH!"), "Selesai.");
-                    
-                    // Leaderboard Increment (Once per game end)
                     if (data.winner === mySymbol && !onlineWinCounted) {
                         onlineWinCounted = true;
                         incrementLeaderboardWins();
                     }
                 } else if (data.status === 'playing') closeModal();
             });
+
             unsubscribeChat = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', rid, 'messages'), (snap) => {
                 const msgs = []; snap.forEach(d => msgs.push(d.data())); msgs.sort((a,b) => a.timestamp - b.timestamp); renderChat(msgs);
                 if (!document.getElementById('chatPanel').classList.contains('open') && msgs.length > 0) document.getElementById('chatDot').classList.remove('hidden');
