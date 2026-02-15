@@ -229,8 +229,8 @@
 
         /* VERIFIED BADGE HD */
         .verified-badge {
-            width: 16px; /* Ukuran diperbesar */
-            height: 16px; /* Ukuran diperbesar */
+            width: 16px;
+            height: 16px;
             display: inline-flex;
             margin-left: 4px;
             vertical-align: middle;
@@ -247,6 +247,25 @@
             70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(26, 115, 232, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
         }
+
+        /* ADMIN BADGE STYLE */
+        .admin-btn {
+            background: linear-gradient(135deg, #1f1f1f, #3c4043);
+            color: #fb8c00;
+            border: 1px solid #5f6368;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .admin-badge {
+            background: #1f1f1f;
+            color: #fb8c00;
+            font-size: 8px;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+            border: 1px solid #fb8c00;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -255,12 +274,19 @@
         <!-- HEADER -->
         <div class="header-content text-center mb-6 shrink-0">
             <div class="flex items-center justify-between mb-4">
-                <button onclick="openProfileModal()" class="w-10 h-10 rounded-full border border-[#e0e0e0] overflow-hidden shadow-sm active:scale-90 transition-all bg-[#f1f3f4] flex items-center justify-center" title="Profil">
-                    <img src="" id="headerAvatar" class="avatar-img hidden">
-                    <div id="headerAvatarFallback" class="svg-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    </div>
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="openProfileModal()" class="w-10 h-10 rounded-full border border-[#e0e0e0] overflow-hidden shadow-sm active:scale-90 transition-all bg-[#f1f3f4] flex items-center justify-center" title="Profil">
+                        <img src="" id="headerAvatar" class="avatar-img hidden">
+                        <div id="headerAvatarFallback" class="svg-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                    </button>
+                    <!-- ADMIN ACCESS BUTTON -->
+                    <button id="adminTrigger" onclick="openAdminPanel()" class="w-10 h-10 rounded-full admin-btn hidden items-center justify-center active:scale-90 transition-all" title="Admin Access">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12,1L3,5v6c0,5.55,3.84,10.74,9,12c5.16-1.26,9-6.45,9-12V5L12,1z M12,7c1.38,0,2.5,1.12,2.5,2.5c0,0.72-0.31,1.38-0.81,1.84 L15,15h-2v-1.5c0-0.28-0.22-0.5-0.5-0.5s-0.5,0.22-0.5,0.5V15H10v-1.5c0-0.28-0.22-0.5-0.5-0.5S9,13.22,9,13.5V15H7l1.31-3.66 C7.81,10.88,7.5,10.22,7.5,9.5C7.5,8.12,8.62,7,10,7L12,7z"/></svg>
+                    </button>
+                </div>
+
                 <h1 class="text-xl font-bold tracking-tight text-[#1f1f1f]">Tic Tac <span class="text-blue-600">Toe</span> Pro</h1>
                 
                 <button onclick="openLeaderboard()" class="w-10 h-10 rounded-full border border-[#e0e0e0] flex items-center justify-center shadow-sm active:scale-90 transition-all bg-[#ffffff] text-[#f9ab00]" title="Peringkat">
@@ -427,6 +453,29 @@
             <div class="watermark mb-4">BY FAUZI DEV</div>
         </div>
 
+        <!-- ADMIN PANEL MODAL -->
+        <div id="adminPanelModal" class="fixed inset-0 bg-[#202124]/60 backdrop-blur-md hidden items-center justify-center z-[80] p-4">
+            <div class="google-card p-6 w-full max-w-sm text-center scale-90 transition-transform duration-300 shadow-2xl flex flex-col max-h-[85dvh]" id="adminPanelContent">
+                <div class="flex items-center justify-between mb-6 shrink-0">
+                    <div class="flex items-center gap-2">
+                        <div class="text-[#fb8c00]">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12,1L3,5v6c0,5.55,3.84,10.74,9,12c5.16-1.26,9-6.45,9-12V5L12,1z"/></svg>
+                        </div>
+                        <h2 class="text-xl font-black text-[#1f1f1f] uppercase tracking-tighter">Panel Akses Penuh</h2>
+                    </div>
+                    <button onclick="closeAdminPanel()" class="p-1 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pr-1" id="adminPlayerList">
+                    <div class="py-10 text-gray-400 text-xs uppercase font-bold tracking-widest loading-dots">Memuat Pemain...</div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t shrink-0">
+                    <p class="text-[9px] text-[#fb8c00] font-black uppercase tracking-widest">Akses Eksklusif: FAUZIDEV Verified</p>
+                </div>
+            </div>
+        </div>
+
         <!-- WIN MODAL -->
         <div id="statusModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-50 p-6">
             <div class="google-card p-10 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl" id="modalContent">
@@ -591,12 +640,37 @@
         const onlineRoomBadge = document.getElementById('onlineRoomBadge'), gridSelectorContainer = document.getElementById('gridSelectorContainer'), winLine = document.getElementById('winLine'), aiLevelContainer = document.getElementById('aiLevelContainer');
 
         async function initAuth() { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); }
-        onAuthStateChanged(auth, async (user) => { if (user) { userId = user.uid; const s = document.getElementById('connectionStatus'); if (s) s.innerText = "Server: Online (" + userId.substring(0,4) + ")"; await loadUserProfile(); } });
+        onAuthStateChanged(auth, async (user) => { 
+            if (user) { 
+                userId = user.uid; 
+                const s = document.getElementById('connectionStatus'); 
+                if (s) s.innerText = "Server: Online (" + userId.substring(0,4) + ")"; 
+                await loadUserProfile(); 
+                checkBanStatus(); // Cek status ban saat login
+            } 
+        });
         initAuth();
+
+        // --- ADMIN HELPERS ---
+        async function checkBanStatus() {
+            if (!userId) return;
+            const banRef = doc(db, 'artifacts', appId, 'public', 'data', 'banned', userId);
+            const snap = await getDoc(banRef);
+            if (snap.exists()) {
+                document.body.innerHTML = `
+                <div class="h-screen w-full flex flex-col items-center justify-center p-10 bg-black text-white text-center">
+                    <div class="w-24 h-24 mb-6 text-red-600">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,2L1,21H23L12,2M12,6L19.53,19H4.47L12,6M11,10V14H13V10H11M11,16V18H13V16H11Z"/></svg>
+                    </div>
+                    <h1 class="text-3xl font-black mb-4">AKSES DIBLOKIR</h1>
+                    <p class="text-gray-400 font-bold uppercase tracking-widest text-sm">Akun Anda telah di-banned oleh FAUZIDEV karena pelanggaran kebijakan.</p>
+                </div>`;
+            }
+        }
 
         // --- UTILS ---
         function formatName(name) {
-            if (name.toUpperCase() === 'FAUZIDEV') return name + BLUE_CHECK;
+            if (name.toUpperCase() === 'FAUZIDEV') return name + BLUE_CHECK + '<span class="admin-badge">ADMIN</span>';
             return name;
         }
 
@@ -621,6 +695,11 @@
             else { userProfile = { name: 'Player' + Math.floor(1000 + Math.random() * 9000), avatar: null, totalWins: 0 }; await setDoc(profileRef, userProfile); }
             updateProfileUI();
             updateLeaderboardEntry();
+            
+            // Tampilkan tombol Admin jika FAUZIDEV
+            if (userProfile.name.toUpperCase() === 'FAUZIDEV') {
+                document.getElementById('adminTrigger').classList.replace('hidden', 'flex');
+            }
         }
 
         function updateProfileUI() {
@@ -677,7 +756,6 @@
             }
 
             await setDoc(usernameRef, { uid: userId });
-
             userProfile.name = newName; 
             userProfile.avatar = selectedAvatarUrl;
             
@@ -691,6 +769,94 @@
             }
             updateLeaderboardEntry();
             updateTurnUI();
+            
+            if (newName.toUpperCase() === 'FAUZIDEV') {
+                document.getElementById('adminTrigger').classList.replace('hidden', 'flex');
+            } else {
+                document.getElementById('adminTrigger').classList.replace('flex', 'hidden');
+            }
+        };
+
+        // --- ADMIN PANEL FUNCTIONS ---
+        window.openAdminPanel = async () => {
+            if (userProfile.name.toUpperCase() !== 'FAUZIDEV') return;
+            playSFX('click');
+            document.getElementById('adminPanelModal').classList.replace('hidden', 'flex');
+            setTimeout(() => document.getElementById('adminPanelContent').classList.replace('scale-90', 'scale-100'), 10);
+            
+            const lbCol = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            onSnapshot(lbCol, (snap) => {
+                const players = [];
+                snap.forEach(d => players.push({ uid: d.id, ...d.data() }));
+                players.sort((a,b) => b.totalWins - a.totalWins);
+                renderAdminPlayerList(players);
+            });
+        };
+
+        window.closeAdminPanel = () => {
+            playSFX('click');
+            document.getElementById('adminPanelContent').classList.replace('scale-100', 'scale-90');
+            setTimeout(() => document.getElementById('adminPanelModal').classList.replace('flex', 'hidden'), 200);
+        };
+
+        async function renderAdminPlayerList(players) {
+            const list = document.getElementById('adminPlayerList');
+            list.innerHTML = '';
+            
+            // Ambil daftar banned
+            const bannedSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'banned'));
+            const bannedUids = bannedSnap.docs.map(d => d.id);
+
+            players.forEach((p) => {
+                if (p.uid === userId) return; // Jangan moderasi diri sendiri
+                
+                const isBanned = bannedUids.includes(p.uid);
+                const item = document.createElement('div');
+                item.className = `p-4 mb-3 rounded-2xl bg-[#f8f9fa] border border-gray-100 flex flex-col gap-3`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full overflow-hidden bg-white border border-gray-200">
+                            ${p.avatar ? `<img src="${p.avatar}" class="avatar-img">` : `<svg class="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="12"/></svg>`}
+                        </div>
+                        <div class="flex-1 text-left">
+                            <div class="text-[11px] font-black text-[#1f1f1f] flex items-center gap-1">
+                                ${p.name} ${isBanned ? '<span class="text-[7px] bg-red-600 text-white px-1.5 rounded uppercase">Banned</span>' : ''}
+                            </div>
+                            <div class="text-[9px] text-gray-500 font-bold">UID: ${p.uid.substring(0,8)}... | Win: ${p.totalWins}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="adminAdjustScore('${p.uid}', 1)" class="flex-1 bg-green-100 text-green-700 text-[8px] font-bold py-2 rounded-xl border border-green-200">+ SKOR</button>
+                        <button onclick="adminAdjustScore('${p.uid}', -1)" class="flex-1 bg-orange-100 text-orange-700 text-[8px] font-bold py-2 rounded-xl border border-orange-200">- SKOR</button>
+                        ${isBanned 
+                            ? `<button onclick="adminUnban('${p.uid}')" class="flex-1 bg-blue-600 text-white text-[8px] font-bold py-2 rounded-xl">UNBAN</button>`
+                            : `<button onclick="adminBan('${p.uid}')" class="flex-1 bg-red-600 text-white text-[8px] font-bold py-2 rounded-xl">BAN</button>`
+                        }
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.adminAdjustScore = async (targetUid, amount) => {
+            const playerRefPublic = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', targetUid);
+            const playerRefPrivate = doc(db, 'artifacts', appId, 'users', targetUid, 'profile', 'data');
+            try {
+                await updateDoc(playerRefPublic, { totalWins: increment(amount) });
+                // Note: Updating private might fail due to security rules if not owner, but public leaderboard will work.
+                await updateDoc(playerRefPrivate, { totalWins: increment(amount) }).catch(() => {});
+            } catch(e) { console.error(e); }
+        };
+
+        window.adminBan = async (targetUid) => {
+            if (!confirm("Ban pemain ini?")) return;
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'banned', targetUid), { bannedAt: Date.now() });
+            openAdminPanel(); // Refresh
+        };
+
+        window.adminUnban = async (targetUid) => {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'banned', targetUid));
+            openAdminPanel(); // Refresh
         };
 
         // --- LEADERBOARD ---
