@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tic Tac Toe Pro Ultra</title>
+    <title>Tic Tac Toe</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
@@ -129,16 +129,16 @@
 
         .mute-btn {
             background-color: #ffffff;
-            width: 52px;
-            height: 52px;
-            border-radius: 18px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
             color: #444746;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
             border: 1px solid #e0e0e0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
         }
 
         .mute-btn:active { transform: scale(0.9); }
@@ -233,9 +233,9 @@
             </div>
         </div>
 
-        <div class="main-content flex flex-col">
+        <div class="main-content flex flex-col overflow-y-auto">
             <!-- SETTINGS -->
-            <div id="gameSettings" class="flex flex-col gap-4 mb-6">
+            <div id="gameSettings" class="flex flex-col gap-4 mb-6 px-1">
                 <div id="gridSelectorContainer" class="flex items-center justify-between">
                     <span class="text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">Pilih Grid</span>
                     <div class="flex gap-2">
@@ -294,32 +294,41 @@
                 </svg>
             </div>
 
-            <!-- TURN INDICATOR -->
-            <div id="turnStatus" class="mb-8 text-center">
-                <div class="inline-flex items-center gap-2 bg-[#ffffff] px-7 py-3 rounded-full border border-[#e0e0e0] shadow-sm">
+            <!-- TURN INDICATOR, MUTE, & RESET AREA (UPDATED) -->
+            <div id="statusControlArea" class="mb-8 flex items-center justify-center gap-3">
+                <div id="turnStatus" class="inline-flex items-center gap-2 bg-[#ffffff] px-6 py-3 rounded-full border border-[#e0e0e0] shadow-sm">
                     <div class="w-2 h-2 rounded-full animate-pulse bg-[#d93025]" id="turnPulse"></div>
                     <span class="text-[11px] font-bold text-[#1f1f1f] uppercase tracking-widest" id="currentPlayerText">PEMAIN X</span>
                 </div>
-            </div>
 
-            <!-- BOTTOM CONTROLS -->
-            <div class="mt-auto flex items-center gap-4">
-                <div id="controls" class="flex flex-1 gap-3">
-                    <!-- TRASH ICON REMOVED AS REQUESTED -->
-                    <button onclick="requestReset()" class="flex-1 bg-[#1f1f1f] text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">
-                        Ulangi
-                    </button>
-                </div>
-                
+                <!-- Tombol Mute (Baru Dipindah ke sini) -->
                 <button onclick="toggleMute()" class="mute-btn shrink-0" id="muteBtn">
-                    <svg id="svg-speaker" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg id="svg-speaker" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                </button>
+
+                <!-- Tombol Ulangi -->
+                <button onclick="requestReset()" class="bg-[#1f1f1f] text-white p-3 rounded-full shadow-lg active:scale-90 transition-all flex items-center justify-center" title="Ulangi Game">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                 </button>
             </div>
 
+            <!-- BOTTOM CONTROLS (Updated) -->
+            <div class="mt-auto flex items-center justify-center gap-4 px-2">
+                <!-- SLIM SUPPORT DEV BUTTON -->
+                <a href="https://teer.id/fauzidev" target="_blank" class="flex-1 max-w-[220px] inline-flex items-center justify-center gap-2 bg-[#fce8e6] text-[#d93025] font-bold py-2.5 px-5 rounded-full transition-all active:scale-95 shadow-sm border border-[#f5c2c7]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                    <span class="text-[10px] uppercase tracking-widest font-extrabold">Support Dev</span>
+                </a>
+            </div>
+
             <!-- WATERMARK -->
-            <div class="watermark">
+            <div class="watermark mb-4">
                 BY FAUZI DEV
             </div>
         </div>
@@ -486,7 +495,7 @@
         }
 
         window.changeGrid = (size) => {
-            initAudio(); playSFX('click'); if (currentRoomId) return alert("Selesaikan permainan online dulu.");
+            initAudio(); playSFX('click'); if (currentRoomId) return;
             gridSize = size; board = Array(size * size).fill('');
             [3, 4, 5].forEach(v => { const b = document.getElementById(`grid${v}`); b.className = (v === size) ? "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#1a73e8] text-white shadow-sm transition-all" : "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#ffffff] text-[#444746] border border-[#e0e0e0] shadow-sm transition-all"; });
             resetGame();
@@ -500,7 +509,7 @@
             resetScores(); gameMode = mode; currentRoomId = null; mySymbol = null;
             ['pvp', 'pve', 'online'].forEach(m => { const b = document.getElementById('btn' + m.charAt(0).toUpperCase() + m.slice(1)); b.className = (m === mode) ? "mode-tab active" : "mode-tab"; });
             aiLevelContainer.classList.toggle('hidden', mode !== 'pve'); onlineLobby.classList.toggle('hidden', mode !== 'online');
-            boardElement.parentElement.parentElement.classList.toggle('hidden', mode === 'online'); document.getElementById('turnStatus').classList.toggle('hidden', mode === 'online');
+            boardElement.parentElement.parentElement.classList.toggle('hidden', mode === 'online'); document.getElementById('statusControlArea').classList.toggle('hidden', mode === 'online');
             onlineRoomBadge.classList.add('hidden'); gridSelectorContainer.classList.remove('hidden'); 
             document.getElementById('chatPanel').classList.remove('open');
             resetGame();
@@ -513,9 +522,22 @@
             if (gameMode === 'online') {
                 if (mySymbol !== currentPlayer || !currentRoomId) return;
                 const nb = [...board]; nb[index] = mySymbol; const wd = checkWinCondition(nb, gridSize);
+                
+                // Kalkulasi Skor Online Baru jika permainan selesai
+                let newScores = { ...scores };
+                if (wd) {
+                    if (wd.winner === 'X') newScores.X++;
+                    else if (wd.winner === 'O') newScores.O++;
+                    else if (wd.winner === 'draw') newScores.draw++;
+                }
+
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
-                    board: nb, currentPlayer: mySymbol === 'X' ? 'O' : 'X',
-                    winner: wd ? wd.winner : null, winningLine: wd ? wd.line : null, status: wd ? 'finished' : 'playing'
+                    board: nb, 
+                    currentPlayer: mySymbol === 'X' ? 'O' : 'X',
+                    winner: wd ? wd.winner : null, 
+                    winningLine: wd ? wd.line : null, 
+                    status: wd ? 'finished' : 'playing',
+                    scores: newScores // Update skor di Database
                 });
             } else {
                 makeMove(index); if (gameActive && gameMode === 'pve' && currentPlayer === 'O') setTimeout(aiMove, 600);
@@ -570,11 +592,18 @@
         window.handlePlayAgain = async () => {
             playSFX('click'); closeModal();
             if (gameMode === 'online' && currentRoomId) {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: Array(gridSize * gridSize).fill(''), currentPlayer: 'X', winner: null, winningLine: null, status: 'playing' });
+                // Saat main lagi di online mode, skor tidak disertakan agar tidak ter-reset ke 0
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { 
+                    board: Array(gridSize * gridSize).fill(''), 
+                    currentPlayer: 'X', 
+                    winner: null, 
+                    winningLine: null, 
+                    status: 'playing' 
+                });
             } else { resetGame(); }
         };
 
-        // --- RESET WARNING LOGIC ---
+        // --- RESET LOGIC ---
         const resetConfirmModal = document.getElementById('resetConfirmModal');
         const resetModalContent = document.getElementById('resetModalContent');
 
@@ -597,7 +626,14 @@
         window.confirmReset = async () => {
             closeResetModal();
             if (gameMode === 'online' && currentRoomId) {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: Array(gridSize * gridSize).fill(''), currentPlayer: 'X', winner: null, winningLine: null, status: 'playing' });
+                // Mereset game papan tulis saja, skor tetap (sesuai logika handlePlayAgain)
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { 
+                    board: Array(gridSize * gridSize).fill(''), 
+                    currentPlayer: 'X', 
+                    winner: null, 
+                    winningLine: null, 
+                    status: 'playing' 
+                });
             } else {
                 resetGame();
             }
@@ -625,14 +661,18 @@
 
         function startRoomListener(rid) {
             onlineLobby.classList.add('hidden'); boardElement.parentElement.parentElement.classList.remove('hidden');
-            document.getElementById('turnStatus').classList.remove('hidden'); onlineRoomBadge.classList.remove('hidden');
+            document.getElementById('statusControlArea').classList.remove('hidden'); onlineRoomBadge.classList.remove('hidden');
             document.getElementById('displayRoomId').innerText = rid;
             
             // Player Room Listener
             unsubscribeRoom = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), (snap) => {
                 if (!snap.exists()) { setMode('pvp'); return; }
                 const data = snap.data(); board = data.board; gridSize = data.gridSize; currentPlayer = data.currentPlayer;
-                gameActive = data.status !== 'finished'; scores = data.scores || scores;
+                gameActive = data.status !== 'finished'; 
+                
+                // Pastikan skor disinkronkan dari database
+                if (data.scores) scores = data.scores;
+                
                 document.getElementById('labelX').innerText = data.players.X === userId ? "ANDA (X)" : "LAWAN (X)";
                 document.getElementById('labelO').innerText = data.players.O ? (data.players.O === userId ? "ANDA (O)" : "LAWAN (O)") : "MENUNGGU...";
                 updateScoreBoard(); initBoard(); updateTurnUI();
@@ -695,5 +735,8 @@
         });
     </script>
 </body>
+</html>
+
+
 </html>
 
