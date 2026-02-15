@@ -260,11 +260,13 @@
             color: #fb8c00;
             font-size: 8px;
             font-weight: 900;
-            padding: 2px 6px;
+            padding: 1px 5px;
             border-radius: 4px;
             margin-left: 4px;
             border: 1px solid #fb8c00;
             display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
         }
     </style>
 </head>
@@ -423,7 +425,7 @@
             <div id="statusControlArea" class="mb-8 flex items-center justify-center gap-3">
                 <div id="turnStatus" class="inline-flex items-center gap-2 bg-[#ffffff] px-6 py-3 rounded-full border border-[#e0e0e0] shadow-sm">
                     <div class="w-2 h-2 rounded-full animate-pulse bg-[#d93025]" id="turnPulse"></div>
-                    <span class="text-[11px] font-bold text-[#1f1f1f] uppercase tracking-widest flex items-center gap-1" id="currentPlayerText">PEMAIN X</span>
+                    <span class="text-[11px] font-bold text-[#1f1f1f] tracking-widest flex items-center gap-1 uppercase" id="currentPlayerText">PEMAIN X</span>
                 </div>
 
                 <button onclick="toggleMute()" class="mute-btn shrink-0" id="muteBtn">
@@ -471,7 +473,22 @@
                 </div>
 
                 <div class="mt-4 pt-4 border-t shrink-0">
-                    <p class="text-[9px] text-[#fb8c00] font-black uppercase tracking-widest">Akses Eksklusif: FAUZIDEV Verified</p>
+                    <p class="text-[9px] text-[#fb8c00] font-black uppercase tracking-widest">Hanya untuk FAUZIDEV Verified</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN CONFIRM MODAL (CUSTOM NOTIF) -->
+        <div id="adminConfirmModal" class="fixed inset-0 bg-[#202124]/60 backdrop-blur-sm hidden items-center justify-center z-[100] p-6">
+            <div class="google-card p-8 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl" id="adminConfirmContent">
+                <div class="w-16 h-16 bg-[#fce8e6] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-[#d93025]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h2 id="adminConfirmTitle" class="text-xl font-extrabold mb-2 text-[#1f1f1f] uppercase">KONFIRMASI</h2>
+                <p id="adminConfirmMessage" class="text-xs text-[#5f6368] mb-8 font-medium">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
+                <div class="flex flex-col gap-3">
+                    <button id="adminConfirmYes" class="w-full bg-[#d93025] text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">YA, LANJUTKAN</button>
+                    <button onclick="closeAdminConfirm()" class="w-full bg-white border border-gray-200 text-[#5f6368] font-bold py-4 rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-widest">BATAL</button>
                 </div>
             </div>
         </div>
@@ -646,7 +663,7 @@
                 const s = document.getElementById('connectionStatus'); 
                 if (s) s.innerText = "Server: Online (" + userId.substring(0,4) + ")"; 
                 await loadUserProfile(); 
-                checkBanStatus(); // Cek status ban saat login
+                checkBanStatus(); 
             } 
         });
         initAuth();
@@ -669,9 +686,15 @@
         }
 
         // --- UTILS ---
-        function formatName(name) {
-            if (name.toUpperCase() === 'FAUZIDEV') return name + BLUE_CHECK + '<span class="admin-badge">ADMIN</span>';
-            return name;
+        // formatName baru: hanya tampilkan badge ADMIN jika showBadge diset ke true
+        function formatName(name, showBadge = false) {
+            const isFauzi = name.toUpperCase() === 'FAUZIDEV';
+            let res = name;
+            if (isFauzi) {
+                res += BLUE_CHECK;
+                if (showBadge) res += '<span class="admin-badge">ADMIN</span>';
+            }
+            return res;
         }
 
         window.showErrorModal = (title, message) => {
@@ -696,7 +719,6 @@
             updateProfileUI();
             updateLeaderboardEntry();
             
-            // Tampilkan tombol Admin jika FAUZIDEV
             if (userProfile.name.toUpperCase() === 'FAUZIDEV') {
                 document.getElementById('adminTrigger').classList.replace('hidden', 'flex');
             }
@@ -709,7 +731,8 @@
             else { hImg.classList.add('hidden'); hFallback.classList.remove('hidden'); }
             document.getElementById('profileNameInput').value = userProfile.name;
             if (gameMode !== 'online') {
-                document.getElementById('labelX').innerHTML = formatName(userProfile.name);
+                // Di Scoreboard tidak pakai tag ADMIN, hanya centang biru
+                document.getElementById('labelX').innerHTML = formatName(userProfile.name, false);
                 updateAvatarDisplay('X', userProfile.avatar);
                 document.getElementById('labelO').innerText = (gameMode === 'pve' ? 'BOT AI' : 'TEMAN');
                 updateAvatarDisplay('O', gameMode === 'pve' ? 'https://ui-avatars.com/api/?name=BOT&background=000&color=fff' : null);
@@ -745,23 +768,18 @@
         
         window.saveProfile = async () => {
             const newName = document.getElementById('profileNameInput').value.trim() || 'Pemain';
-            
             const nameKey = newName.toLowerCase();
             const usernameRef = doc(db, 'artifacts', appId, 'public', 'data', 'usernames', nameKey);
             const nameSnap = await getDoc(usernameRef);
-            
             if (nameSnap.exists() && nameSnap.data().uid !== userId) {
                 showErrorModal("Gagal", `Nama "${newName}" sudah diklaim orang lain! Pilih nama lain.`);
                 return;
             }
-
             await setDoc(usernameRef, { uid: userId });
             userProfile.name = newName; 
             userProfile.avatar = selectedAvatarUrl;
-            
             updateProfileUI();
             closeProfileModal();
-            
             await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), userProfile);
             if (currentRoomId && mySymbol) { 
                 const upd = {}; upd[`playerData.${mySymbol}`] = { name: newName, avatar: selectedAvatarUrl }; 
@@ -769,12 +787,8 @@
             }
             updateLeaderboardEntry();
             updateTurnUI();
-            
-            if (newName.toUpperCase() === 'FAUZIDEV') {
-                document.getElementById('adminTrigger').classList.replace('hidden', 'flex');
-            } else {
-                document.getElementById('adminTrigger').classList.replace('flex', 'hidden');
-            }
+            if (newName.toUpperCase() === 'FAUZIDEV') document.getElementById('adminTrigger').classList.replace('hidden', 'flex');
+            else document.getElementById('adminTrigger').classList.replace('flex', 'hidden');
         };
 
         // --- ADMIN PANEL FUNCTIONS ---
@@ -783,7 +797,6 @@
             playSFX('click');
             document.getElementById('adminPanelModal').classList.replace('hidden', 'flex');
             setTimeout(() => document.getElementById('adminPanelContent').classList.replace('scale-90', 'scale-100'), 10);
-            
             const lbCol = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
             onSnapshot(lbCol, (snap) => {
                 const players = [];
@@ -802,14 +815,10 @@
         async function renderAdminPlayerList(players) {
             const list = document.getElementById('adminPlayerList');
             list.innerHTML = '';
-            
-            // Ambil daftar banned
             const bannedSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'banned'));
             const bannedUids = bannedSnap.docs.map(d => d.id);
-
             players.forEach((p) => {
-                if (p.uid === userId) return; // Jangan moderasi diri sendiri
-                
+                if (p.uid === userId) return; 
                 const isBanned = bannedUids.includes(p.uid);
                 const item = document.createElement('div');
                 item.className = `p-4 mb-3 rounded-2xl bg-[#f8f9fa] border border-gray-100 flex flex-col gap-3`;
@@ -829,8 +838,8 @@
                         <button onclick="adminAdjustScore('${p.uid}', 1)" class="flex-1 bg-green-100 text-green-700 text-[8px] font-bold py-2 rounded-xl border border-green-200">+ SKOR</button>
                         <button onclick="adminAdjustScore('${p.uid}', -1)" class="flex-1 bg-orange-100 text-orange-700 text-[8px] font-bold py-2 rounded-xl border border-orange-200">- SKOR</button>
                         ${isBanned 
-                            ? `<button onclick="adminUnban('${p.uid}')" class="flex-1 bg-blue-600 text-white text-[8px] font-bold py-2 rounded-xl">UNBAN</button>`
-                            : `<button onclick="adminBan('${p.uid}')" class="flex-1 bg-red-600 text-white text-[8px] font-bold py-2 rounded-xl">BAN</button>`
+                            ? `<button onclick="adminRequestUnban('${p.uid}')" class="flex-1 bg-blue-600 text-white text-[8px] font-bold py-2 rounded-xl">UNBAN</button>`
+                            : `<button onclick="adminRequestBan('${p.uid}')" class="flex-1 bg-red-600 text-white text-[8px] font-bold py-2 rounded-xl">BAN</button>`
                         }
                     </div>
                 `;
@@ -838,25 +847,45 @@
             });
         }
 
+        // --- CUSTOM ADMIN CONFIRM DIALOG ---
+        let adminAction = null;
+        window.adminRequestBan = (targetUid) => {
+            showAdminConfirm("BAN PEMAIN", "Apakah Anda yakin ingin memblokir akses pemain ini secara permanen?", async () => {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'banned', targetUid), { bannedAt: Date.now() });
+                openAdminPanel();
+            });
+        };
+        window.adminRequestUnban = (targetUid) => {
+            showAdminConfirm("UNBAN PEMAIN", "Hapus blokir untuk pemain ini?", async () => {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'banned', targetUid));
+                openAdminPanel();
+            });
+        };
+        function showAdminConfirm(title, message, callback) {
+            document.getElementById('adminConfirmTitle').innerText = title;
+            document.getElementById('adminConfirmMessage').innerText = message;
+            adminAction = callback;
+            const modal = document.getElementById('adminConfirmModal');
+            modal.classList.replace('hidden', 'flex');
+            setTimeout(() => document.getElementById('adminConfirmContent').classList.replace('scale-90', 'scale-100'), 10);
+        }
+        window.closeAdminConfirm = () => {
+            document.getElementById('adminConfirmContent').classList.replace('scale-100', 'scale-90');
+            setTimeout(() => document.getElementById('adminConfirmModal').classList.replace('flex', 'hidden'), 200);
+            adminAction = null;
+        };
+        document.getElementById('adminConfirmYes').onclick = () => {
+            if (adminAction) adminAction();
+            closeAdminConfirm();
+        };
+
         window.adminAdjustScore = async (targetUid, amount) => {
             const playerRefPublic = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', targetUid);
             const playerRefPrivate = doc(db, 'artifacts', appId, 'users', targetUid, 'profile', 'data');
             try {
                 await updateDoc(playerRefPublic, { totalWins: increment(amount) });
-                // Note: Updating private might fail due to security rules if not owner, but public leaderboard will work.
                 await updateDoc(playerRefPrivate, { totalWins: increment(amount) }).catch(() => {});
             } catch(e) { console.error(e); }
-        };
-
-        window.adminBan = async (targetUid) => {
-            if (!confirm("Ban pemain ini?")) return;
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'banned', targetUid), { bannedAt: Date.now() });
-            openAdminPanel(); // Refresh
-        };
-
-        window.adminUnban = async (targetUid) => {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'banned', targetUid));
-            openAdminPanel(); // Refresh
         };
 
         // --- LEADERBOARD ---
@@ -864,7 +893,6 @@
             playSFX('click');
             document.getElementById('leaderboardModal').classList.replace('hidden', 'flex');
             setTimeout(() => document.getElementById('leaderboardModalContent').classList.replace('scale-90', 'scale-100'), 10);
-            
             const lbCol = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
             onSnapshot(lbCol, (snap) => {
                 const players = [];
@@ -888,7 +916,7 @@
                     </div>
                     <div class="flex-1 text-left">
                         <div class="text-[12px] font-bold text-[#1f1f1f] truncate w-32 flex items-center">
-                            ${formatName(p.name)} 
+                            ${formatName(p.name, true)} 
                             ${p.id === userId ? '<span class="text-[8px] text-blue-500 ml-1 font-black">(ANDA)</span>' : ''}
                         </div>
                         <div class="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">${p.totalWins} Kemenangan</div>
@@ -986,8 +1014,9 @@
         function getStrategicMove() { const c = Math.floor(board.length / 2); if (board[c] === '') return c; const corners = [0, gridSize-1, board.length-gridSize, board.length-1].filter(i => board[i] === ''); return corners.length > 0 ? corners[Math.floor(Math.random() * corners.length)] : null; }
 
         function updateTurnUI() { 
-            let activeName = currentPlayer === 'X' ? document.getElementById('labelX').innerHTML : document.getElementById('labelO').innerHTML; 
-            currentPlayerText.innerHTML = activeName.toUpperCase(); 
+            // Untuk Indikator Giliran, tampilkan tag ADMIN
+            let activeName = currentPlayer === 'X' ? formatName(document.getElementById('labelX').innerText, true) : formatName(document.getElementById('labelO').innerText, true); 
+            currentPlayerText.innerHTML = activeName; 
             document.getElementById('turnPulse').className = `w-2 h-2 rounded-full animate-pulse ${currentPlayer === 'X' ? 'bg-[#d93025]' : 'bg-[#1a73e8]'}`; 
             document.getElementById('boxX').style.borderColor = currentPlayer === 'X' ? '#d93025' : 'transparent'; 
             document.getElementById('boxO').style.borderColor = currentPlayer === 'O' ? '#1a73e8' : 'transparent'; 
@@ -1043,14 +1072,13 @@
             onlineLobby.classList.add('hidden'); document.getElementById('searchingOverlay').classList.add('hidden');
             boardElement.parentElement.parentElement.classList.remove('hidden'); document.getElementById('statusControlArea').classList.remove('hidden'); onlineRoomBadge.classList.remove('hidden');
             document.getElementById('displayRoomId').innerText = rid;
-
             unsubscribeRoom = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), (snap) => {
                 if (!snap.exists()) { if (currentRoomId) { currentRoomId = null; showErrorModal("BUBAR", "Lawan meninggalkan room."); setMode('online'); } return; }
                 const data = snap.data(); if (data.isGlobal && data.status === 'waiting') { document.getElementById('searchingOverlay').classList.remove('hidden'); boardElement.parentElement.parentElement.classList.add('hidden'); document.getElementById('statusControlArea').classList.add('hidden'); } else { document.getElementById('searchingOverlay').classList.add('hidden'); boardElement.parentElement.parentElement.classList.remove('hidden'); document.getElementById('statusControlArea').classList.remove('hidden'); }
                 board = data.board; gridSize = data.gridSize; currentPlayer = data.currentPlayer; gameActive = data.status !== 'finished'; if (data.scores) scores = data.scores;
                 const pX = data.playerData.X || { name: 'X', avatar: null }; const pO = data.playerData.O || { name: 'Menunggu...', avatar: null };
-                document.getElementById('labelX').innerHTML = formatName(pX.name); updateAvatarDisplay('X', pX.avatar);
-                document.getElementById('labelO').innerHTML = formatName(pO.name); updateAvatarDisplay('O', pO.avatar);
+                document.getElementById('labelX').innerHTML = formatName(pX.name, false); updateAvatarDisplay('X', pX.avatar);
+                document.getElementById('labelO').innerHTML = formatName(pO.name, false); updateAvatarDisplay('O', pO.avatar);
                 updateScoreBoard(); initBoard(); updateTurnUI();
                 if (data.status === 'finished') {
                     if (data.winner && data.winner !== 'draw') { drawWinningLine(data.winningLine); playSFX('win'); } else playSFX('draw');
@@ -1058,7 +1086,6 @@
                     if (data.winner === mySymbol && !onlineWinCounted) { onlineWinCounted = true; incrementLeaderboardWins(); }
                 } else if (data.status === 'playing') closeModal();
             });
-
             unsubscribeChat = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', rid, 'messages'), (snap) => {
                 const msgs = []; snap.forEach(d => msgs.push(d.data())); msgs.sort((a,b) => a.timestamp - b.timestamp); renderChat(msgs);
                 if (!document.getElementById('chatPanel').classList.contains('open') && msgs.length > 0) document.getElementById('chatDot').classList.remove('hidden');
@@ -1075,7 +1102,9 @@
             const container = document.getElementById('chatMessages'); container.innerHTML = '';
             msgs.forEach(m => {
                 const isMe = m.senderId === userId; const bubble = document.createElement('div'); bubble.className = `chat-bubble ${isMe ? 'chat-me' : 'chat-them'}`;
-                const sender = document.createElement('div'); sender.className = 'chat-sender'; sender.innerHTML = formatName(m.senderName || 'User');
+                const sender = document.createElement('div'); sender.className = 'chat-sender'; 
+                // Di obrolan tampilkan tag ADMIN
+                sender.innerHTML = formatName(m.senderName || 'User', true);
                 const txt = document.createElement('div'); txt.innerText = m.text;
                 if (!isMe) bubble.appendChild(sender); bubble.appendChild(txt); container.appendChild(bubble);
             });
