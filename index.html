@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tic Tac Toe</title>
+    <title>Tic Tac Toe Pro Ultra</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
         
-        /* Proteksi Global: Anti-Zoom, Anti-Geser, Anti-Salin */
+        /* Proteksi Global */
         html, body {
             overflow: hidden;
             overscroll-behavior: none;
@@ -147,9 +147,6 @@
         #board.grid-4 { grid-template-columns: repeat(4, 1fr); }
         #board.grid-5 { grid-template-columns: repeat(5, 1fr); }
 
-        .loading-dots:after { content: '.'; animation: dots 1s steps(5, end) infinite; }
-        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60% { content: '...'; } 80%, 100% { content: ''; } }
-
         .watermark {
             text-align: center;
             font-size: 10px;
@@ -180,15 +177,55 @@
         #chatPanel.open { transform: translateY(0); }
         .chat-bubble {
             max-width: 80%;
-            padding: 10px 16px;
+            padding: 8px 12px;
             border-radius: 18px;
             margin-bottom: 8px;
             font-size: 13px;
             line-height: 1.4;
             word-wrap: break-word;
+            position: relative;
         }
         .chat-me { background: #1a73e8; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
         .chat-them { background: #f1f3f4; color: #1f1f1f; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .chat-sender { font-size: 9px; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; opacity: 0.7; }
+
+        /* AVATAR STYLES */
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .avatar-option {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f1f3f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .avatar-option.selected {
+            border-color: #1a73e8;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+        }
+        .score-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #e0e0e0;
+        }
+        .svg-icon {
+            width: 24px;
+            height: 24px;
+            color: #5f6368;
+        }
     </style>
 </head>
 <body>
@@ -196,7 +233,20 @@
     <div class="app-container">
         <!-- HEADER -->
         <div class="header-content text-center mb-6 shrink-0">
-            <h1 class="text-2xl font-bold tracking-tight text-[#1f1f1f] mb-4">Tic Tac <span class="text-blue-600">Toe</span> Pro</h1>
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="openProfileModal()" class="w-10 h-10 rounded-full border border-[#e0e0e0] overflow-hidden shadow-sm active:scale-90 transition-all bg-[#f1f3f4] flex items-center justify-center" title="Profil">
+                    <img src="" id="headerAvatar" class="avatar-img hidden">
+                    <div id="headerAvatarFallback" class="svg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                </button>
+                <h1 class="text-xl font-bold tracking-tight text-[#1f1f1f]">Tic Tac <span class="text-blue-600">Toe</span> Pro</h1>
+                
+                <!-- Ikon Leaderboard -->
+                <button onclick="openLeaderboard()" class="w-10 h-10 rounded-full border border-[#e0e0e0] flex items-center justify-center shadow-sm active:scale-90 transition-all bg-[#ffffff] text-[#f9ab00]" title="Peringkat">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19,5h-2V3H7v2H5C3.9,5,3,5.9,3,7v1c0,2.55,1.92,4.63,4.39,4.94c0.63,1.5,1.98,2.63,3.61,2.96V19H7v2h10v-2h-4v-3.1 c1.63-0.33,2.98-1.46,3.61-2.96C19.08,12.63,21,10.55,21,8V7C21,5.9,20.1,5,19,5z M5,8V7h2v3.82C5.84,10.4,5,9.3,5,8z M19,8 c0,1.3-0.84,2.4-2,2.82V7h2V8z"/></svg>
+                </button>
+            </div>
             
             <div id="onlineRoomBadge" class="hidden mb-4">
                 <div class="flex items-center justify-center gap-2">
@@ -218,16 +268,28 @@
 
             <!-- SCORE BOARD -->
             <div class="flex items-center gap-3">
-                <div class="google-card p-3 flex-1 flex flex-col items-center transition-all border-b-4 border-transparent" id="boxX">
-                    <span class="text-[9px] font-bold text-[#5f6368] uppercase tracking-tighter" id="labelX">Pemain X</span>
+                <div class="google-card p-3 flex-1 flex flex-col items-center transition-all border-b-4 border-transparent overflow-hidden" id="boxX">
+                    <div class="flex items-center gap-1.5 mb-1">
+                        <div id="scoreAvatarXContainer" class="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                            <img src="" id="avatarX" class="score-avatar hidden">
+                            <svg id="fallbackX" class="w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <span class="text-[9px] font-bold text-[#5f6368] uppercase tracking-tighter truncate max-w-[60px]" id="labelX">Pemain X</span>
+                    </div>
                     <span id="scoreX" class="text-2xl font-bold text-[#d93025]">0</span>
                 </div>
                 <div class="google-card p-2 px-4 shrink-0 flex flex-col items-center bg-[#f1f3f4] border border-[#e0e0e0] shadow-none">
                     <span class="text-[9px] font-bold text-[#5f6368] uppercase">Draw</span>
                     <span id="scoreDraw" class="text-xl font-bold text-[#1f1f1f]">0</span>
                 </div>
-                <div class="google-card p-3 flex-1 flex flex-col items-center transition-all border-b-4 border-transparent" id="boxO">
-                    <span class="text-[9px] font-bold text-[#5f6368] uppercase tracking-tighter" id="labelO">Pemain O</span>
+                <div class="google-card p-3 flex-1 flex flex-col items-center transition-all border-b-4 border-transparent overflow-hidden" id="boxO">
+                    <div class="flex items-center gap-1.5 mb-1">
+                        <div id="scoreAvatarOContainer" class="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                            <img src="" id="avatarO" class="score-avatar hidden">
+                            <svg id="fallbackO" class="w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <span class="text-[9px] font-bold text-[#5f6368] uppercase tracking-tighter truncate max-w-[60px]" id="labelO">Pemain O</span>
+                    </div>
                     <span id="scoreO" class="text-2xl font-bold text-[#1a73e8]">0</span>
                 </div>
             </div>
@@ -294,21 +356,19 @@
                 </svg>
             </div>
 
-            <!-- TURN INDICATOR, MUTE, & RESET AREA (UPDATED) -->
+            <!-- TURN INDICATOR & CONTROLS -->
             <div id="statusControlArea" class="mb-8 flex items-center justify-center gap-3">
                 <div id="turnStatus" class="inline-flex items-center gap-2 bg-[#ffffff] px-6 py-3 rounded-full border border-[#e0e0e0] shadow-sm">
                     <div class="w-2 h-2 rounded-full animate-pulse bg-[#d93025]" id="turnPulse"></div>
                     <span class="text-[11px] font-bold text-[#1f1f1f] uppercase tracking-widest" id="currentPlayerText">PEMAIN X</span>
                 </div>
 
-                <!-- Tombol Mute (Baru Dipindah ke sini) -->
                 <button onclick="toggleMute()" class="mute-btn shrink-0" id="muteBtn">
                     <svg id="svg-speaker" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                     </svg>
                 </button>
 
-                <!-- Tombol Ulangi -->
                 <button onclick="requestReset()" class="bg-[#1f1f1f] text-white p-3 rounded-full shadow-lg active:scale-90 transition-all flex items-center justify-center" title="Ulangi Game">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -316,9 +376,8 @@
                 </button>
             </div>
 
-            <!-- BOTTOM CONTROLS (Updated) -->
+            <!-- BOTTOM CONTROLS -->
             <div class="mt-auto flex items-center justify-center gap-4 px-2">
-                <!-- SLIM SUPPORT DEV BUTTON -->
                 <a href="https://teer.id/fauzidev" target="_blank" class="flex-1 max-w-[220px] inline-flex items-center justify-center gap-2 bg-[#fce8e6] text-[#d93025] font-bold py-2.5 px-5 rounded-full transition-all active:scale-95 shadow-sm border border-[#f5c2c7]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
@@ -328,9 +387,7 @@
             </div>
 
             <!-- WATERMARK -->
-            <div class="watermark mb-4">
-                BY FAUZI DEV
-            </div>
+            <div class="watermark mb-4">BY FAUZI DEV</div>
         </div>
 
         <!-- WIN MODAL -->
@@ -347,7 +404,50 @@
             </div>
         </div>
 
-        <!-- RESET CONFIRMATION MODAL -->
+        <!-- PROFILE MODAL -->
+        <div id="profileModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-50 p-6">
+            <div class="google-card p-8 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl" id="profileModalContent">
+                <h2 class="text-xl font-extrabold mb-6 text-[#1f1f1f] uppercase">Pengaturan Profil</h2>
+                <div class="mb-6 text-left">
+                    <label class="block text-[10px] font-bold text-[#5f6368] uppercase mb-2">Nama Tampilan</label>
+                    <input type="text" id="profileNameInput" maxlength="12" placeholder="Nama Anda" class="w-full bg-[#f1f3f4] border border-transparent rounded-2xl px-4 py-3 text-[#1f1f1f] font-bold outline-none focus:bg-white focus:border-[#1a73e8] transition-all">
+                </div>
+                <div class="mb-8 text-left">
+                    <label class="block text-[10px] font-bold text-[#5f6368] uppercase mb-3">Foto Profil</label>
+                    <div class="grid grid-cols-4 gap-3" id="avatarSelector"></div>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <button onclick="saveProfile()" class="w-full bg-[#1a73e8] text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">SIMPAN</button>
+                    <button onclick="closeProfileModal()" class="w-full bg-white border border-gray-200 text-[#5f6368] font-bold py-4 rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-widest">BATAL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEADERBOARD MODAL (NEW) -->
+        <div id="leaderboardModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+            <div class="google-card p-6 w-full max-w-sm text-center scale-90 transition-transform duration-300 shadow-2xl flex flex-col max-h-[80dvh]" id="leaderboardModalContent">
+                <div class="flex items-center justify-between mb-6 shrink-0">
+                    <div class="flex items-center gap-2">
+                        <div class="text-[#f9ab00]">
+                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19,5h-2V3H7v2H5C3.9,5,3,5.9,3,7v1c0,2.55,1.92,4.63,4.39,4.94c0.63,1.5,1.98,2.63,3.61,2.96V19H7v2h10v-2h-4v-3.1 c1.63-0.33,2.98-1.46,3.61-2.96C19.08,12.63,21,10.55,21,8V7C21,5.9,20.1,5,19,5z M5,8V7h2v3.82C5.84,10.4,5,9.3,5,8z M19,8 c0,1.3-0.84,2.4-2,2.82V7h2V8z"/></svg>
+                        </div>
+                        <h2 class="text-xl font-extrabold text-[#1f1f1f] uppercase tracking-tighter">Papan Peringkat</h2>
+                    </div>
+                    <button onclick="closeLeaderboard()" class="p-1 text-gray-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pr-1" id="leaderboardList">
+                    <!-- List items loaded here -->
+                    <div class="py-10 text-gray-400 text-xs uppercase font-bold tracking-widest loading-dots">Memuat</div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t shrink-0">
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Hanya kemenangan Online yang dihitung</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESET MODAL -->
         <div id="resetConfirmModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-50 p-6">
             <div class="google-card p-8 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl" id="resetModalContent">
                 <div class="w-16 h-16 bg-[#fce8e6] rounded-full flex items-center justify-center mx-auto mb-6">
@@ -356,12 +456,8 @@
                 <h2 class="text-xl font-extrabold mb-2 text-[#1f1f1f] uppercase">ULANGI GAME?</h2>
                 <p class="text-xs text-[#5f6368] mb-8 font-medium">Papan akan dikosongkan. Tindakan ini tidak dapat dibatalkan.</p>
                 <div class="flex flex-col gap-3">
-                    <button onclick="confirmReset()" class="w-full bg-[#d93025] text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">
-                        YA, ULANGI
-                    </button>
-                    <button onclick="closeResetModal()" class="w-full bg-white border border-gray-200 text-[#5f6368] font-bold py-4 rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-widest">
-                        BATAL
-                    </button>
+                    <button onclick="confirmReset()" class="w-full bg-[#d93025] text-white font-bold py-4 rounded-2xl shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">YA, ULANGI</button>
+                    <button onclick="closeResetModal()" class="w-full bg-white border border-gray-200 text-[#5f6368] font-bold py-4 rounded-2xl transition-all active:scale-95 text-xs uppercase tracking-widest">BATAL</button>
                 </div>
             </div>
         </div>
@@ -374,9 +470,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
-            <div id="chatMessages" class="flex-1 overflow-y-auto p-5 flex flex-col bg-[#fafafa]">
-                <!-- Messages -->
-            </div>
+            <div id="chatMessages" class="flex-1 overflow-y-auto p-5 flex flex-col bg-[#fafafa]"></div>
             <div class="p-4 border-t shrink-0 flex gap-2 items-center bg-white pb-10">
                 <input type="text" id="chatInput" placeholder="Ketik pesan..." class="flex-1 bg-[#f1f3f4] rounded-2xl px-4 py-3 text-sm outline-none focus:bg-white focus:border-[#1a73e8] border border-transparent transition-all">
                 <button onclick="sendChatMessage()" class="bg-[#1a73e8] text-white p-3 rounded-full shadow-md active:scale-90 transition-all">
@@ -386,41 +480,24 @@
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#1f1f1f] text-white px-6 py-2.5 rounded-full font-bold shadow-2xl opacity-0 transition-opacity pointer-events-none z-[60] text-[10px] tracking-widest uppercase">
-        Kode Disalin!
-    </div>
+    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#1f1f1f] text-white px-6 py-2.5 rounded-full font-bold shadow-2xl opacity-0 transition-opacity pointer-events-none z-[60] text-[10px] tracking-widest uppercase">Kode Disalin!</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc, collection, addDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- AUDIO ---
         let audioCtx = null, isMuted = false, bgmSource = null;
         const initAudio = () => { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); };
         const playSFX = (type) => {
-            if (isMuted || !audioCtx) return;
-            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (isMuted || !audioCtx) return; const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination);
             const now = audioCtx.currentTime;
-            if (type === 'click') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(10, now + 0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(); osc.stop(now + 0.1); }
-            else if (type === 'win') { osc.type = 'triangle'; [523, 659, 783, 1046].forEach((f, i) => osc.frequency.setValueAtTime(f, now + i * 0.1)); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5); osc.start(); osc.stop(now + 0.5); }
-            else if (type === 'draw') { osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(100, now + 0.3); gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.3); osc.start(); osc.stop(now + 0.3); }
+            if (type === 'click') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); gain.gain.setValueAtTime(0.2, now); osc.start(); osc.stop(now + 0.1); }
+            else if (type === 'win') { osc.type = 'triangle'; [523, 659, 783].forEach((f, i) => osc.frequency.setValueAtTime(f, now + i * 0.1)); gain.gain.setValueAtTime(0.2, now); osc.start(); osc.stop(now + 0.4); }
+            else if (type === 'draw') { osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); gain.gain.setValueAtTime(0.2, now); osc.start(); osc.stop(now + 0.3); }
         };
-        const startBGM = () => {
-            if (isMuted || !audioCtx || bgmSource) return;
-            const masterGain = audioCtx.createGain(); masterGain.gain.setValueAtTime(0.02, audioCtx.currentTime); masterGain.connect(audioCtx.destination);
-            const playNote = () => {
-                if (isMuted) return;
-                const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-                osc.connect(g); g.connect(masterGain);
-                osc.frequency.setValueAtTime([261.63, 329.63, 392.00, 440.00][Math.floor(Math.random() * 4)], audioCtx.currentTime);
-                g.gain.setValueAtTime(0, audioCtx.currentTime); g.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 1.5); g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 4);
-                osc.start(); osc.stop(audioCtx.currentTime + 4); setTimeout(playNote, 3000);
-            };
-            bgmSource = true;
-            playNote();
-        };
+        const startBGM = () => { if (isMuted || !audioCtx || bgmSource) return; bgmSource = true; };
 
         window.toggleMute = () => {
             isMuted = !isMuted; const svg = document.getElementById('svg-speaker');
@@ -428,10 +505,25 @@
             else { initAudio(); startBGM(); svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />'; }
         };
 
-        // --- GAME LOGIC ---
+        // --- GAME STATE ---
         let gridSize = 3, board = Array(9).fill(''), currentPlayer = 'X', gameActive = true, gameMode = 'pvp', aiDifficulty = 'easy', scores = { X: 0, O: 0, draw: 0 };
         let db, auth, userId, currentRoomId = null, mySymbol = null, unsubscribeRoom = null, unsubscribeChat = null;
+        let onlineWinCounted = false; // Flag to prevent double win counting locally
         
+        const avatarOptions = [
+            null,
+            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&h=120&fit=crop',
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop',
+            'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=120&h=120&fit=crop',
+            'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&h=120&fit=crop',
+            'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&h=120&fit=crop',
+            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop',
+            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop',
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop'
+        ];
+        let userProfile = { name: 'Pemain', avatar: null, totalWins: 0 };
+        let selectedAvatarUrl = null;
+
         const firebaseConfig = {
             apiKey: "AIzaSyAiknTiGhLeeZREUy5CJQ6Gq8O0FSXWYh8",
             authDomain: "tictactoe-ultra.firebaseapp.com",
@@ -441,7 +533,7 @@
             appId: "1:110161757179:web:b3aaf10a123a77728d815e"
         };
         
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tictactoe-pro-google-final-v2';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tictactoe-pro-v6-leaderboard';
         const app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
 
         const boardElement = document.getElementById('board'), scoreXElement = document.getElementById('scoreX'), scoreOElement = document.getElementById('scoreO'), scoreDrawElement = document.getElementById('scoreDraw');
@@ -449,9 +541,124 @@
         const onlineRoomBadge = document.getElementById('onlineRoomBadge'), gridSelectorContainer = document.getElementById('gridSelectorContainer'), winLine = document.getElementById('winLine'), aiLevelContainer = document.getElementById('aiLevelContainer');
 
         async function initAuth() { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); }
-        onAuthStateChanged(auth, (user) => { if (user) { userId = user.uid; const s = document.getElementById('connectionStatus'); if (s) s.innerText = "Server: Online (" + userId.substring(0,4) + ")"; } });
+        onAuthStateChanged(auth, async (user) => { if (user) { userId = user.uid; const s = document.getElementById('connectionStatus'); if (s) s.innerText = "Server: Online (" + userId.substring(0,4) + ")"; await loadUserProfile(); } });
         initAuth();
 
+        // --- PROFILE & LEADERBOARD SYNC ---
+        async function loadUserProfile() {
+            if (!userId) return;
+            const profileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
+            const snap = await getDoc(profileRef);
+            if (snap.exists()) { userProfile = snap.data(); selectedAvatarUrl = userProfile.avatar; } 
+            else { userProfile = { name: 'Player' + Math.floor(1000 + Math.random() * 9000), avatar: null, totalWins: 0 }; await setDoc(profileRef, userProfile); }
+            updateProfileUI();
+            updateLeaderboardEntry();
+        }
+
+        function updateProfileUI() {
+            const hImg = document.getElementById('headerAvatar');
+            const hFallback = document.getElementById('headerAvatarFallback');
+            if (userProfile.avatar) { hImg.src = userProfile.avatar; hImg.classList.remove('hidden'); hFallback.classList.add('hidden'); } 
+            else { hImg.classList.add('hidden'); hFallback.classList.remove('hidden'); }
+            document.getElementById('profileNameInput').value = userProfile.name;
+            if (gameMode !== 'online') {
+                document.getElementById('labelX').innerText = userProfile.name;
+                updateAvatarDisplay('X', userProfile.avatar);
+                document.getElementById('labelO').innerText = (gameMode === 'pve' ? 'BOT AI' : 'TEMAN');
+                updateAvatarDisplay('O', gameMode === 'pve' ? 'https://ui-avatars.com/api/?name=BOT&background=000&color=fff' : null);
+            }
+        }
+
+        async function updateLeaderboardEntry() {
+            // Path Strict Rule 1: /artifacts/{appId}/public/data/{collectionName}
+            const lbRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', userId);
+            await setDoc(lbRef, { name: userProfile.name, avatar: userProfile.avatar, totalWins: userProfile.totalWins || 0 }, { merge: true });
+        }
+
+        function updateAvatarDisplay(side, url) {
+            const img = document.getElementById(`avatar${side}`);
+            const fb = document.getElementById(`fallback${side}`);
+            if (url) { img.src = url; img.classList.remove('hidden'); fb.classList.add('hidden'); } 
+            else { img.classList.add('hidden'); fb.classList.remove('hidden'); }
+        }
+
+        function renderAvatarOptions() {
+            const container = document.getElementById('avatarSelector'); container.innerHTML = '';
+            avatarOptions.forEach(url => {
+                const btn = document.createElement('div');
+                btn.className = `avatar-option ${selectedAvatarUrl === url ? 'selected' : ''}`;
+                if (url) btn.innerHTML = `<img src="${url}" class="avatar-img">`;
+                else btn.innerHTML = `<svg class="w-6 h-6 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+                btn.onclick = () => { selectedAvatarUrl = url; renderAvatarOptions(); };
+                container.appendChild(btn);
+            });
+        }
+
+        window.openProfileModal = () => { playSFX('click'); document.getElementById('profileModal').classList.replace('hidden', 'flex'); setTimeout(() => document.getElementById('profileModalContent').classList.replace('scale-90', 'scale-100'), 10); renderAvatarOptions(); };
+        window.closeProfileModal = () => { playSFX('click'); document.getElementById('profileModalContent').classList.replace('scale-100', 'scale-90'); setTimeout(() => document.getElementById('profileModal').classList.replace('flex', 'hidden'), 200); };
+        
+        window.saveProfile = async () => {
+            const newName = document.getElementById('profileNameInput').value.trim() || 'Pemain';
+            userProfile.name = newName; userProfile.avatar = selectedAvatarUrl;
+            updateProfileUI();
+            closeProfileModal();
+            await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), userProfile);
+            if (currentRoomId && mySymbol) { 
+                const upd = {}; upd[`playerData.${mySymbol}`] = { name: newName, avatar: selectedAvatarUrl }; 
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), upd); 
+            }
+            updateLeaderboardEntry();
+            updateTurnUI();
+        };
+
+        // --- LEADERBOARD LOGIC ---
+        window.openLeaderboard = () => {
+            playSFX('click');
+            document.getElementById('leaderboardModal').classList.replace('hidden', 'flex');
+            setTimeout(() => document.getElementById('leaderboardModalContent').classList.replace('scale-90', 'scale-100'), 10);
+            
+            // Start real-time listener for leaderboard
+            const lbCol = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            onSnapshot(lbCol, (snap) => {
+                const players = [];
+                snap.forEach(d => players.push({ id: d.id, ...d.data() }));
+                // Local sort (Rule 2: No complex queries)
+                players.sort((a,b) => b.totalWins - a.totalWins);
+                renderLeaderboard(players);
+            }, (err) => console.error("Leaderboard fail:", err));
+        };
+
+        function renderLeaderboard(players) {
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = '';
+            players.forEach((p, idx) => {
+                const item = document.createElement('div');
+                item.className = `flex items-center gap-3 p-3 mb-2 rounded-2xl ${p.id === userId ? 'bg-blue-50 border border-blue-100' : 'bg-[#f8f9fa]'}`;
+                
+                const rankColor = idx === 0 ? 'text-[#f9ab00]' : idx === 1 ? 'text-[#9e9e9e]' : idx === 2 ? 'text-[#cd7f32]' : 'text-gray-400';
+                
+                item.innerHTML = `
+                    <div class="w-6 text-xs font-black ${rankColor}">${idx + 1}</div>
+                    <div class="w-8 h-8 rounded-full overflow-hidden bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                        ${p.avatar ? `<img src="${p.avatar}" class="avatar-img">` : `<svg class="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
+                    </div>
+                    <div class="flex-1 text-left">
+                        <div class="text-[11px] font-bold text-[#1f1f1f] truncate w-24">${p.name} ${p.id === userId ? '<span class="text-[8px] text-blue-500 ml-1">(ANDA)</span>' : ''}</div>
+                        <div class="text-[9px] text-gray-400 font-medium uppercase tracking-tighter">${p.totalWins} Kemenangan</div>
+                    </div>
+                    ${idx < 3 ? `<div class="text-lg">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>` : ''}
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.closeLeaderboard = () => {
+            playSFX('click');
+            document.getElementById('leaderboardModalContent').classList.replace('scale-100', 'scale-90');
+            setTimeout(() => document.getElementById('leaderboardModal').classList.replace('flex', 'hidden'), 200);
+        };
+
+        // --- GAME CORE ---
         function checkWinCondition(cb, size) {
             const winLength = size === 3 ? 3 : 4; 
             for (let r = 0; r < size; r++) {
@@ -494,249 +701,125 @@
             winLine.classList.remove('hidden'); winLine.style.animation = 'none'; winLine.offsetHeight; winLine.style.animation = null;
         }
 
-        window.changeGrid = (size) => {
-            initAudio(); playSFX('click'); if (currentRoomId) return;
-            gridSize = size; board = Array(size * size).fill('');
-            [3, 4, 5].forEach(v => { const b = document.getElementById(`grid${v}`); b.className = (v === size) ? "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#1a73e8] text-white shadow-sm transition-all" : "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#ffffff] text-[#444746] border border-[#e0e0e0] shadow-sm transition-all"; });
-            resetGame();
-        };
+        window.changeGrid = (size) => { initAudio(); playSFX('click'); if (currentRoomId) return; gridSize = size; board = Array(size * size).fill(''); [3,4,5].forEach(v => { const b = document.getElementById(`grid${v}`); b.className = (v === size) ? "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#1a73e8] text-white shadow-sm transition-all" : "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#ffffff] text-[#444746] border border-[#e0e0e0] shadow-sm transition-all"; }); resetGame(); };
 
         window.setMode = async (mode) => {
             initAudio(); playSFX('click'); startBGM();
             if (gameMode === 'online' && currentRoomId && mySymbol === 'X') { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId)); } catch(e) {} }
-            if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
-            if (unsubscribeChat) { unsubscribeChat(); unsubscribeChat = null; }
+            if (unsubscribeRoom) unsubscribeRoom(); if (unsubscribeChat) unsubscribeChat();
             resetScores(); gameMode = mode; currentRoomId = null; mySymbol = null;
             ['pvp', 'pve', 'online'].forEach(m => { const b = document.getElementById('btn' + m.charAt(0).toUpperCase() + m.slice(1)); b.className = (m === mode) ? "mode-tab active" : "mode-tab"; });
             aiLevelContainer.classList.toggle('hidden', mode !== 'pve'); onlineLobby.classList.toggle('hidden', mode !== 'online');
             boardElement.parentElement.parentElement.classList.toggle('hidden', mode === 'online'); document.getElementById('statusControlArea').classList.toggle('hidden', mode === 'online');
-            onlineRoomBadge.classList.add('hidden'); gridSelectorContainer.classList.remove('hidden'); 
-            document.getElementById('chatPanel').classList.remove('open');
-            resetGame();
+            onlineRoomBadge.classList.add('hidden'); gridSelectorContainer.classList.remove('hidden'); document.getElementById('chatPanel').classList.remove('open');
+            updateProfileUI(); resetGame();
         };
 
         async function handleCellClick(e) {
             initAudio(); const index = parseInt(e.currentTarget.dataset.index);
-            if (board[index] !== '' || !gameActive) return;
-            playSFX('click');
+            if (board[index] !== '' || !gameActive) return; playSFX('click');
             if (gameMode === 'online') {
                 if (mySymbol !== currentPlayer || !currentRoomId) return;
                 const nb = [...board]; nb[index] = mySymbol; const wd = checkWinCondition(nb, gridSize);
-                
-                // Kalkulasi Skor Online Baru jika permainan selesai
-                let newScores = { ...scores };
-                if (wd) {
-                    if (wd.winner === 'X') newScores.X++;
-                    else if (wd.winner === 'O') newScores.O++;
-                    else if (wd.winner === 'draw') newScores.draw++;
-                }
-
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
-                    board: nb, 
-                    currentPlayer: mySymbol === 'X' ? 'O' : 'X',
-                    winner: wd ? wd.winner : null, 
-                    winningLine: wd ? wd.line : null, 
-                    status: wd ? 'finished' : 'playing',
-                    scores: newScores // Update skor di Database
-                });
-            } else {
-                makeMove(index); if (gameActive && gameMode === 'pve' && currentPlayer === 'O') setTimeout(aiMove, 600);
-            }
+                let newScores = { ...scores }; if (wd) { if (wd.winner === 'X') newScores.X++; else if (wd.winner === 'O') newScores.O++; else if (wd.winner === 'draw') newScores.draw++; }
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: nb, currentPlayer: mySymbol === 'X' ? 'O' : 'X', winner: wd ? wd.winner : null, winningLine: wd ? wd.line : null, status: wd ? 'finished' : 'playing', scores: newScores });
+            } else { makeMove(index); if (gameActive && gameMode === 'pve' && currentPlayer === 'O') setTimeout(aiMove, 600); }
         }
 
         function makeMove(index) {
-            board[index] = currentPlayer; const cell = boardElement.children[index];
-            cell.innerText = currentPlayer; cell.classList.add(currentPlayer === 'X' ? 'x-mark' : 'o-mark');
+            board[index] = currentPlayer; const cell = boardElement.children[index]; cell.innerText = currentPlayer; cell.classList.add(currentPlayer === 'X' ? 'x-mark' : 'o-mark');
             const wd = checkWinCondition(board, gridSize);
-            if (wd) {
-                if (wd.winner !== 'draw') { drawWinningLine(wd.line); scores[currentPlayer]++; playSFX('win'); } else { scores.draw++; playSFX('draw'); }
-                updateScoreBoard(); setTimeout(() => showModal(wd.winner === 'draw' ? "HASIL SERI" : `PEMAIN ${currentPlayer} MENANG`, "Permainan selesai."), 300);
-                gameActive = false;
-            } else { currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateTurnUI(); }
+            if (wd) { if (wd.winner !== 'draw') { drawWinningLine(wd.line); scores[currentPlayer]++; playSFX('win'); } else { scores.draw++; playSFX('draw'); } updateScoreBoard(); setTimeout(() => showModal(wd.winner === 'draw' ? "HASIL SERI" : `PEMAIN ${currentPlayer} MENANG`, "Selesai."), 300); gameActive = false; } else { currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateTurnUI(); }
         }
 
-        window.changeDifficulty = (l) => {
-            initAudio(); playSFX('click'); aiDifficulty = l;
-            ['easy', 'medium', 'hard'].forEach(v => {
-                const b = document.getElementById('diff' + v.charAt(0).toUpperCase() + v.slice(1));
-                const colors = { easy: 'bg-[#1e8e3e]', medium: 'bg-[#f9ab00]', hard: 'bg-[#d93025]' };
-                b.className = (v === l) ? `px-3 py-1.5 rounded-full text-[10px] font-bold ${colors[v]} text-white transition-all uppercase shadow-sm` : "px-3 py-1.5 rounded-full text-[10px] font-bold bg-[#ffffff] text-[#444746] border border-[#e0e0e0] transition-all uppercase shadow-sm";
-            });
-            resetGame();
-        };
-
-        function aiMove() {
-            if (!gameActive) return; let move = null;
-            if (aiDifficulty === 'easy') move = getRandomMove();
-            else if (aiDifficulty === 'medium') move = getWinningMove('O') || getWinningMove('X') || getRandomMove();
-            else move = getWinningMove('O') || getWinningMove('X') || getStrategicMove() || getRandomMove();
-            if (move !== null) { playSFX('click'); makeMove(move); }
-        }
-
+        window.changeDifficulty = (l) => { initAudio(); playSFX('click'); aiDifficulty = l; ['easy', 'medium', 'hard'].forEach(v => { const b = document.getElementById('diff' + v.charAt(0).toUpperCase() + v.slice(1)); const col = { easy: 'bg-[#1e8e3e]', medium: 'bg-[#f9ab00]', hard: 'bg-[#d93025]' }; b.className = (v === l) ? `px-3 py-1.5 rounded-full text-[10px] font-bold ${col[v]} text-white transition-all uppercase shadow-sm` : "px-3 py-1.5 rounded-full text-[10px] font-bold bg-[#ffffff] text-[#444746] border border-[#e0e0e0] transition-all uppercase shadow-sm"; }); resetGame(); };
+        function aiMove() { if (!gameActive) return; let m = (aiDifficulty === 'easy') ? getRandomMove() : (getWinningMove('O') || getWinningMove('X') || (aiDifficulty === 'hard' ? getStrategicMove() : null) || getRandomMove()); if (m !== null) makeMove(m); }
         function getRandomMove() { const m = board.map((v, i) => v === '' ? i : null).filter(v => v !== null); return m.length > 0 ? m[Math.floor(Math.random() * m.length)] : null; }
-        function getWinningMove(p) { for (let i = 0; i < board.length; i++) { if (board[i] === '') { const tb = [...board]; tb[i] = p; const res = checkWinCondition(tb, gridSize); if (res && res.winner === p) return i; } } return null; }
-        function getStrategicMove() { const c = Math.floor(board.length / 2); if (board[c] === '') return c; const s = gridSize, corners = [0, s - 1, s * (s - 1), s * s - 1], f = corners.filter(i => board[i] === ''); return f.length > 0 ? f[Math.floor(Math.random() * f.length)] : null; }
+        function getWinningMove(p) { for (let i = 0; i < board.length; i++) { if (board[i] === '') { const tb = [...board]; tb[i] = p; if (checkWinCondition(tb, gridSize)?.winner === p) return i; } } return null; }
+        function getStrategicMove() { const c = Math.floor(board.length / 2); if (board[c] === '') return c; const corners = [0, gridSize-1, board.length-gridSize, board.length-1].filter(i => board[i] === ''); return corners.length > 0 ? corners[Math.floor(Math.random() * corners.length)] : null; }
 
-        function updateTurnUI() {
-            currentPlayerText.innerText = `PEMAIN ${currentPlayer}`;
-            document.getElementById('turnPulse').className = `w-2 h-2 rounded-full animate-pulse ${currentPlayer === 'X' ? 'bg-[#d93025]' : 'bg-[#1a73e8]'}`;
-            document.getElementById('boxX').style.borderColor = currentPlayer === 'X' ? '#d93025' : 'transparent';
-            document.getElementById('boxO').style.borderColor = currentPlayer === 'O' ? '#1a73e8' : 'transparent';
-        }
-
+        function updateTurnUI() { let activeName = currentPlayer === 'X' ? document.getElementById('labelX').innerText : document.getElementById('labelO').innerText; currentPlayerText.innerText = activeName.toUpperCase(); document.getElementById('turnPulse').className = `w-2 h-2 rounded-full animate-pulse ${currentPlayer === 'X' ? 'bg-[#d93025]' : 'bg-[#1a73e8]'}`; document.getElementById('boxX').style.borderColor = currentPlayer === 'X' ? '#d93025' : 'transparent'; document.getElementById('boxO').style.borderColor = currentPlayer === 'O' ? '#1a73e8' : 'transparent'; }
         function updateScoreBoard() { scoreXElement.innerText = scores.X; scoreOElement.innerText = scores.O; scoreDrawElement.innerText = scores.draw; }
-        function showModal(msg, submsg) { winnerText.innerText = msg; document.getElementById('winnerSubtext').innerText = submsg; statusModal.classList.remove('hidden'); statusModal.classList.add('flex'); setTimeout(() => document.getElementById('modalContent').classList.replace('scale-90', 'scale-100'), 10); }
-
-        window.closeModal = () => { statusModal.classList.add('hidden'); statusModal.classList.remove('flex'); document.getElementById('modalContent').classList.replace('scale-100', 'scale-90'); };
-
-        window.handlePlayAgain = async () => {
-            playSFX('click'); closeModal();
-            if (gameMode === 'online' && currentRoomId) {
-                // Saat main lagi di online mode, skor tidak disertakan agar tidak ter-reset ke 0
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { 
-                    board: Array(gridSize * gridSize).fill(''), 
-                    currentPlayer: 'X', 
-                    winner: null, 
-                    winningLine: null, 
-                    status: 'playing' 
-                });
-            } else { resetGame(); }
-        };
-
-        // --- RESET LOGIC ---
-        const resetConfirmModal = document.getElementById('resetConfirmModal');
-        const resetModalContent = document.getElementById('resetModalContent');
-
-        window.requestReset = () => {
-            initAudio(); playSFX('click');
-            resetConfirmModal.classList.remove('hidden');
-            resetConfirmModal.classList.add('flex');
-            setTimeout(() => resetModalContent.classList.replace('scale-90', 'scale-100'), 10);
-        };
-
-        window.closeResetModal = () => {
-            playSFX('click');
-            resetModalContent.classList.replace('scale-100', 'scale-90');
-            setTimeout(() => {
-                resetConfirmModal.classList.add('hidden');
-                resetConfirmModal.classList.remove('flex');
-            }, 200);
-        };
-
-        window.confirmReset = async () => {
-            closeResetModal();
-            if (gameMode === 'online' && currentRoomId) {
-                // Mereset game papan tulis saja, skor tetap (sesuai logika handlePlayAgain)
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { 
-                    board: Array(gridSize * gridSize).fill(''), 
-                    currentPlayer: 'X', 
-                    winner: null, 
-                    winningLine: null, 
-                    status: 'playing' 
-                });
-            } else {
-                resetGame();
-            }
-        };
-
-        window.resetGame = () => { board = Array(gridSize * gridSize).fill(''); currentPlayer = 'X'; gameActive = true; updateTurnUI(); initBoard(); };
+        function showModal(msg, submsg) { winnerText.innerText = msg; document.getElementById('winnerSubtext').innerText = submsg; statusModal.classList.replace('hidden', 'flex'); setTimeout(() => document.getElementById('modalContent').classList.replace('scale-90', 'scale-100'), 10); }
+        window.closeModal = () => { document.getElementById('modalContent').classList.replace('scale-100', 'scale-90'); setTimeout(() => statusModal.classList.replace('flex', 'hidden'), 200); };
+        window.handlePlayAgain = async () => { playSFX('click'); closeModal(); if (gameMode === 'online' && currentRoomId) { onlineWinCounted = false; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: Array(gridSize * gridSize).fill(''), currentPlayer: 'X', winner: null, winningLine: null, status: 'playing' }); } else resetGame(); };
+        window.requestReset = () => { initAudio(); playSFX('click'); document.getElementById('resetConfirmModal').classList.replace('hidden', 'flex'); setTimeout(() => document.getElementById('resetModalContent').classList.replace('scale-90', 'scale-100'), 10); };
+        window.closeResetModal = () => { document.getElementById('resetModalContent').classList.replace('scale-100', 'scale-90'); setTimeout(() => document.getElementById('resetConfirmModal').classList.replace('flex', 'hidden'), 200); };
+        window.confirmReset = async () => { closeResetModal(); if (gameMode === 'online' && currentRoomId) { onlineWinCounted = false; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: Array(gridSize * gridSize).fill(''), currentPlayer: 'X', winner: null, winningLine: null, status: 'playing' }); } else resetGame(); };
+        window.resetGame = () => { board = Array(gridSize * gridSize).fill(''); currentPlayer = 'X'; gameActive = true; onlineWinCounted = false; updateTurnUI(); initBoard(); };
         window.resetScores = () => { scores = { X: 0, O: 0, draw: 0 }; updateScoreBoard(); resetGame(); };
 
+        // --- ONLINE LOGIC ---
         window.createNewRoom = async () => {
             initAudio(); playSFX('click'); startBGM(); if (!userId) return;
             const rid = Math.random().toString(36).substring(2, 8).toUpperCase(); currentRoomId = rid; mySymbol = 'X';
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { board: Array(gridSize * gridSize).fill(''), gridSize: gridSize, currentPlayer: 'X', players: { X: userId, O: null }, status: 'waiting', winner: null, winningLine: null, scores: { X: 0, O: 0, draw: 0 } });
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { board: Array(gridSize * gridSize).fill(''), gridSize, currentPlayer: 'X', players: { X: userId, O: null }, playerData: { X: { name: userProfile.name, avatar: userProfile.avatar }, O: null }, status: 'waiting', winner: null, winningLine: null, scores: { X: 0, O: 0, draw: 0 } });
             gridSelectorContainer.classList.add('hidden'); startRoomListener(rid);
         };
 
         window.joinRoom = async () => {
-            initAudio(); playSFX('click'); startBGM(); const inputId = document.getElementById('roomInput').value.trim().toUpperCase();
-            if (!inputId || !userId) return;
-            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', inputId));
-            if (!snap.exists()) return alert("Room tidak ditemukan!");
+            initAudio(); playSFX('click'); startBGM(); const rid = document.getElementById('roomInput').value.trim().toUpperCase(); if (!rid || !userId) return;
+            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid)); if (!snap.exists()) return alert("Room tidak ditemukan!");
             const data = snap.data(); if (data.players.O && data.players.O !== userId) return alert("Room penuh!");
-            if (!data.players.O && data.players.X !== userId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', inputId), { "players.O": userId, status: 'playing' });
-            currentRoomId = inputId; mySymbol = data.players.X === userId ? 'X' : 'O'; gridSelectorContainer.classList.add('hidden'); startRoomListener(inputId);
+            if (!data.players.O && data.players.X !== userId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { "players.O": userId, "playerData.O": { name: userProfile.name, avatar: userProfile.avatar }, status: 'playing' });
+            currentRoomId = rid; mySymbol = data.players.X === userId ? 'X' : 'O'; gridSelectorContainer.classList.add('hidden'); startRoomListener(rid);
         };
 
         function startRoomListener(rid) {
-            onlineLobby.classList.add('hidden'); boardElement.parentElement.parentElement.classList.remove('hidden');
-            document.getElementById('statusControlArea').classList.remove('hidden'); onlineRoomBadge.classList.remove('hidden');
+            onlineLobby.classList.add('hidden'); boardElement.parentElement.parentElement.classList.remove('hidden'); document.getElementById('statusControlArea').classList.remove('hidden'); onlineRoomBadge.classList.remove('hidden');
             document.getElementById('displayRoomId').innerText = rid;
-            
-            // Player Room Listener
             unsubscribeRoom = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), (snap) => {
                 if (!snap.exists()) { setMode('pvp'); return; }
-                const data = snap.data(); board = data.board; gridSize = data.gridSize; currentPlayer = data.currentPlayer;
-                gameActive = data.status !== 'finished'; 
-                
-                // Pastikan skor disinkronkan dari database
-                if (data.scores) scores = data.scores;
-                
-                document.getElementById('labelX').innerText = data.players.X === userId ? "ANDA (X)" : "LAWAN (X)";
-                document.getElementById('labelO').innerText = data.players.O ? (data.players.O === userId ? "ANDA (O)" : "LAWAN (O)") : "MENUNGGU...";
+                const data = snap.data(); board = data.board; gridSize = data.gridSize; currentPlayer = data.currentPlayer; gameActive = data.status !== 'finished'; if (data.scores) scores = data.scores;
+                const pX = data.playerData.X || { name: 'Pemain X', avatar: null }; const pO = data.playerData.O || { name: 'Menunggu...', avatar: null };
+                document.getElementById('labelX').innerText = pX.name; updateAvatarDisplay('X', pX.avatar);
+                document.getElementById('labelO').innerText = pO.name; updateAvatarDisplay('O', pO.avatar);
                 updateScoreBoard(); initBoard(); updateTurnUI();
-                if (data.status === 'finished') { if (data.winner && data.winner !== 'draw') { drawWinningLine(data.winningLine); playSFX('win'); } else playSFX('draw'); showModal(data.winner === 'draw' ? "HASIL SERI" : (data.winner === mySymbol ? "ANDA MENANG!" : "ANDA KALAH!"), "Permainan Online selesai."); }
-                else if (data.status === 'playing') { closeModal(); }
+                
+                if (data.status === 'finished') {
+                    if (data.winner && data.winner !== 'draw') { drawWinningLine(data.winningLine); playSFX('win'); } else playSFX('draw');
+                    showModal(data.winner === 'draw' ? "HASIL SERI" : (data.winner === mySymbol ? "ANDA MENANG!" : "ANDA KALAH!"), "Selesai.");
+                    
+                    // Leaderboard Increment (Once per game end)
+                    if (data.winner === mySymbol && !onlineWinCounted) {
+                        onlineWinCounted = true;
+                        incrementLeaderboardWins();
+                    }
+                } else if (data.status === 'playing') closeModal();
             });
-
-            // Chat Listener
-            const chatCollection = collection(db, 'artifacts', appId, 'public', 'data', 'rooms', rid, 'messages');
-            unsubscribeChat = onSnapshot(chatCollection, (snap) => {
-                const messages = [];
-                snap.forEach(d => messages.push(d.data()));
-                messages.sort((a,b) => a.timestamp - b.timestamp);
-                renderChat(messages);
-                const panel = document.getElementById('chatPanel');
-                if (!panel.classList.contains('open') && messages.length > 0) {
-                    document.getElementById('chatDot').classList.remove('hidden');
-                }
+            unsubscribeChat = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', rid, 'messages'), (snap) => {
+                const msgs = []; snap.forEach(d => msgs.push(d.data())); msgs.sort((a,b) => a.timestamp - b.timestamp); renderChat(msgs);
+                if (!document.getElementById('chatPanel').classList.contains('open') && msgs.length > 0) document.getElementById('chatDot').classList.remove('hidden');
             });
         }
 
+        async function incrementLeaderboardWins() {
+            userProfile.totalWins = (userProfile.totalWins || 0) + 1;
+            await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), { totalWins: increment(1) });
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', userId), { totalWins: increment(1) });
+        }
+
         function renderChat(msgs) {
-            const container = document.getElementById('chatMessages');
-            container.innerHTML = '';
+            const container = document.getElementById('chatMessages'); container.innerHTML = '';
             msgs.forEach(m => {
-                const bubble = document.createElement('div');
-                bubble.className = `chat-bubble ${m.senderId === userId ? 'chat-me' : 'chat-them'}`;
-                bubble.innerText = m.text;
-                container.appendChild(bubble);
+                const isMe = m.senderId === userId; const bubble = document.createElement('div'); bubble.className = `chat-bubble ${isMe ? 'chat-me' : 'chat-them'}`;
+                const sender = document.createElement('div'); sender.className = 'chat-sender'; sender.innerText = m.senderName || 'User';
+                const txt = document.createElement('div'); txt.innerText = m.text;
+                if (!isMe) bubble.appendChild(sender); bubble.appendChild(txt); container.appendChild(bubble);
             });
             container.scrollTop = container.scrollHeight;
         }
 
         window.sendChatMessage = async () => {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if (!text || !currentRoomId) return;
-            input.value = '';
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'messages'), {
-                text: text,
-                senderId: userId,
-                timestamp: Date.now()
-            });
+            const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text || !currentRoomId) return; input.value = '';
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'messages'), { text, senderId: userId, senderName: userProfile.name, timestamp: Date.now() });
         };
-
-        window.toggleChat = () => {
-            const panel = document.getElementById('chatPanel');
-            const isOpen = panel.classList.toggle('open');
-            if (isOpen) document.getElementById('chatDot').classList.add('hidden');
-            playSFX('click');
-        };
-
+        window.toggleChat = () => { const panel = document.getElementById('chatPanel'); const isOpen = panel.classList.toggle('open'); if (isOpen) document.getElementById('chatDot').classList.add('hidden'); playSFX('click'); };
         window.copyRoomId = () => { playSFX('click'); const t = document.getElementById('displayRoomId').innerText, el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); const toast = document.getElementById('toast'); toast.style.opacity = '1'; setTimeout(() => toast.style.opacity = '0', 2000); };
         window.onload = () => { initBoard(); updateTurnUI(); updateScoreBoard(); };
         window.addEventListener('click', () => { if (!audioCtx) { initAudio(); startBGM(); } }, { once: true });
-
-        // Enter to send chat
-        document.getElementById('chatInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendChatMessage();
-        });
+        document.getElementById('chatInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
     </script>
 </body>
-</html>
-
-
 </html>
 
