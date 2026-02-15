@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tic Tac Toe Pro Ultra</title>
+    <title>Tic Tac Toe Pro Ultra - Verified</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
@@ -187,7 +187,7 @@
         }
         .chat-me { background: #1a73e8; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
         .chat-them { background: #f1f3f4; color: #1f1f1f; align-self: flex-start; border-bottom-left-radius: 4px; }
-        .chat-sender { font-size: 9px; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; opacity: 0.7; }
+        .chat-sender { font-size: 9px; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; opacity: 0.7; display: flex; align-items: center; gap: 4px; }
 
         /* AVATAR STYLES */
         .avatar-img {
@@ -227,6 +227,15 @@
             color: #5f6368;
         }
 
+        /* VERIFIED BADGE */
+        .verified-badge {
+            width: 12px;
+            height: 12px;
+            display: inline-flex;
+            margin-left: 2px;
+            vertical-align: middle;
+        }
+
         /* SEARCHING PULSE */
         .pulse-searching {
             animation: pulse-ring 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite;
@@ -252,7 +261,6 @@
                 </button>
                 <h1 class="text-xl font-bold tracking-tight text-[#1f1f1f]">Tic Tac <span class="text-blue-600">Toe</span> Pro</h1>
                 
-                <!-- Ikon Leaderboard -->
                 <button onclick="openLeaderboard()" class="w-10 h-10 rounded-full border border-[#e0e0e0] flex items-center justify-center shadow-sm active:scale-90 transition-all bg-[#ffffff] text-[#f9ab00]" title="Peringkat">
                     <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M19,5h-2V3H7v2H5C3.9,5,3,5.9,3,7v1c0,2.55,1.92,4.63,4.39,4.94c0.63,1.5,1.98,2.63,3.61,2.96V19H7v2h10v-2h-4v-3.1 c1.63-0.33,2.98-1.46,3.61-2.96C19.08,12.63,21,10.55,21,8V7C21,5.9,20.1,5,19,5z M5,8V7h2v3.82C5.84,10.4,5,9.3,5,8z M19,8 c0,1.3-0.84,2.4-2,2.82V7h2V8z"/></svg>
                 </button>
@@ -284,7 +292,7 @@
                             <img src="" id="avatarX" class="score-avatar hidden">
                             <svg id="fallbackX" class="w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         </div>
-                        <span class="text-[9px] font-bold text-[#5f6368] uppercase tracking-tighter truncate max-w-[60px]" id="labelX">Pemain X</span>
+                        <span class="text-[9px] font-bold text-[#5f6368] uppercase tracking-tighter truncate max-w-[80px] flex items-center gap-0.5" id="labelX">Pemain X</span>
                     </div>
                     <span id="scoreX" class="text-2xl font-bold text-[#d93025]">0</span>
                 </div>
@@ -298,7 +306,7 @@
                             <img src="" id="avatarO" class="score-avatar hidden">
                             <svg id="fallbackO" class="w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         </div>
-                        <span class="text-[9px] font-bold text-[#5f6368] uppercase tracking-tighter truncate max-w-[60px]" id="labelO">Pemain O</span>
+                        <span class="text-[9px] font-bold text-[#5f6368] uppercase tracking-tighter truncate max-w-[60px] flex items-center gap-0.5" id="labelO">Pemain O</span>
                     </div>
                     <span id="scoreO" class="text-2xl font-bold text-[#1a73e8]">0</span>
                 </div>
@@ -387,7 +395,7 @@
             <div id="statusControlArea" class="mb-8 flex items-center justify-center gap-3">
                 <div id="turnStatus" class="inline-flex items-center gap-2 bg-[#ffffff] px-6 py-3 rounded-full border border-[#e0e0e0] shadow-sm">
                     <div class="w-2 h-2 rounded-full animate-pulse bg-[#d93025]" id="turnPulse"></div>
-                    <span class="text-[11px] font-bold text-[#1f1f1f] uppercase tracking-widest" id="currentPlayerText">PEMAIN X</span>
+                    <span class="text-[11px] font-bold text-[#1f1f1f] uppercase tracking-widest flex items-center gap-1" id="currentPlayerText">PEMAIN X</span>
                 </div>
 
                 <button onclick="toggleMute()" class="mute-btn shrink-0" id="muteBtn">
@@ -473,7 +481,7 @@
             </div>
         </div>
 
-        <!-- ERROR / NOTIFICATION MODAL (KUSTOM) -->
+        <!-- ERROR / NOTIFICATION MODAL -->
         <div id="alertModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-[70] p-6">
             <div class="google-card p-8 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl" id="alertModalContent">
                 <div class="w-16 h-16 bg-[#e8f0fe] rounded-full flex items-center justify-center mx-auto mb-6">
@@ -525,8 +533,11 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc, collection, addDoc, increment, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // --- VERIFIED BADGE SVG ---
+        const BLUE_CHECK = `<svg class="verified-badge" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L13.8 4.3L16.6 3.9L17.5 6.6L20.2 7.5L19.8 10.3L22.1 12.1L19.8 13.9L20.2 16.7L17.5 17.6L16.6 20.3L13.8 19.9L12 22.2L10.2 19.9L7.4 20.3L6.5 17.6L3.8 16.7L4.2 13.9L1.9 12.1L4.2 10.3L3.8 7.5L6.5 6.6L7.4 3.9L10.2 4.3L12 2Z" fill="#0095F6"/><path d="M16.5 9.5L10.5 15.5L7.5 12.5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
         // --- AUDIO ---
-        let audioCtx = null, isMuted = false, bgmSource = null;
+        let audioCtx = null, isMuted = false;
         const initAudio = () => { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); };
         const playSFX = (type) => {
             if (isMuted || !audioCtx) return; const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination);
@@ -570,7 +581,7 @@
             appId: "1:110161757179:web:b3aaf10a123a77728d815e"
         };
         
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tictactoe-pro-v6-leaderboard';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tictactoe-pro-v6-verified';
         const app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
 
         const boardElement = document.getElementById('board'), scoreXElement = document.getElementById('scoreX'), scoreOElement = document.getElementById('scoreO'), scoreDrawElement = document.getElementById('scoreDraw');
@@ -581,7 +592,12 @@
         onAuthStateChanged(auth, async (user) => { if (user) { userId = user.uid; const s = document.getElementById('connectionStatus'); if (s) s.innerText = "Server: Online (" + userId.substring(0,4) + ")"; await loadUserProfile(); } });
         initAuth();
 
-        // --- CUSTOM ALERT MODAL LOGIC ---
+        // --- UTILS ---
+        function formatName(name) {
+            if (name.toUpperCase() === 'FAUZIDEV') return name + BLUE_CHECK;
+            return name;
+        }
+
         window.showErrorModal = (title, message) => {
             document.getElementById('alertTitle').innerText = title;
             document.getElementById('alertMessage').innerText = message;
@@ -594,7 +610,7 @@
             setTimeout(() => document.getElementById('alertModal').classList.replace('flex', 'hidden'), 200);
         };
 
-        // --- PROFILE & LEADERBOARD SYNC ---
+        // --- PROFILE SYNC ---
         async function loadUserProfile() {
             if (!userId) return;
             const profileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
@@ -612,7 +628,7 @@
             else { hImg.classList.add('hidden'); hFallback.classList.remove('hidden'); }
             document.getElementById('profileNameInput').value = userProfile.name;
             if (gameMode !== 'online') {
-                document.getElementById('labelX').innerText = userProfile.name;
+                document.getElementById('labelX').innerHTML = formatName(userProfile.name);
                 updateAvatarDisplay('X', userProfile.avatar);
                 document.getElementById('labelO').innerText = (gameMode === 'pve' ? 'BOT AI' : 'TEMAN');
                 updateAvatarDisplay('O', gameMode === 'pve' ? 'https://ui-avatars.com/api/?name=BOT&background=000&color=fff' : null);
@@ -648,9 +664,26 @@
         
         window.saveProfile = async () => {
             const newName = document.getElementById('profileNameInput').value.trim() || 'Pemain';
-            userProfile.name = newName; userProfile.avatar = selectedAvatarUrl;
+            
+            // CEK USERNAME UNIK
+            const nameKey = newName.toLowerCase();
+            const usernameRef = doc(db, 'artifacts', appId, 'public', 'data', 'usernames', nameKey);
+            const nameSnap = await getDoc(usernameRef);
+            
+            if (nameSnap.exists() && nameSnap.data().uid !== userId) {
+                showErrorModal("Gagal", `Nama "${newName}" sudah diklaim orang lain! Pilih nama lain.`);
+                return;
+            }
+
+            // Klaim Username
+            await setDoc(usernameRef, { uid: userId });
+
+            userProfile.name = newName; 
+            userProfile.avatar = selectedAvatarUrl;
+            
             updateProfileUI();
             closeProfileModal();
+            
             await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), userProfile);
             if (currentRoomId && mySymbol) { 
                 const upd = {}; upd[`playerData.${mySymbol}`] = { name: newName, avatar: selectedAvatarUrl }; 
@@ -660,7 +693,7 @@
             updateTurnUI();
         };
 
-        // --- LEADERBOARD LOGIC ---
+        // --- LEADERBOARD ---
         window.openLeaderboard = () => {
             playSFX('click');
             document.getElementById('leaderboardModal').classList.replace('hidden', 'flex');
@@ -688,7 +721,10 @@
                         ${p.avatar ? `<img src="${p.avatar}" class="avatar-img">` : `<svg class="w-4 h-4 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
                     </div>
                     <div class="flex-1 text-left">
-                        <div class="text-[11px] font-bold text-[#1f1f1f] truncate w-24">${p.name} ${p.id === userId ? '<span class="text-[8px] text-blue-500 ml-1">(ANDA)</span>' : ''}</div>
+                        <div class="text-[11px] font-bold text-[#1f1f1f] truncate w-24 flex items-center gap-0.5">
+                            ${formatName(p.name)} 
+                            ${p.id === userId ? '<span class="text-[8px] text-blue-500 ml-1">(ANDA)</span>' : ''}
+                        </div>
                         <div class="text-[9px] text-gray-400 font-medium uppercase tracking-tighter">${p.totalWins} Kemenangan</div>
                     </div>
                 `;
@@ -749,19 +785,11 @@
 
         window.setMode = async (mode) => {
             initAudio(); playSFX('click');
-            // OTOMATIS BUBAR JIKA SEDANG DI ROOM
-            if (currentRoomId) { 
-                try { 
-                    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId);
-                    const snap = await getDoc(roomRef);
-                    if (snap.exists()) await deleteDoc(roomRef);
-                } catch(e) {} 
-            }
+            if (currentRoomId) { try { const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId); await deleteDoc(roomRef); } catch(e) {} }
             if (unsubscribeRoom) unsubscribeRoom(); if (unsubscribeChat) unsubscribeChat();
             resetScores(); gameMode = mode; currentRoomId = null; mySymbol = null;
             ['pvp', 'pve', 'online'].forEach(m => { const b = document.getElementById('btn' + m.charAt(0).toUpperCase() + m.slice(1)); b.className = (m === mode) ? "mode-tab active" : "mode-tab"; });
-            aiLevelContainer.classList.toggle('hidden', mode !== 'pve'); 
-            onlineLobby.classList.toggle('hidden', mode !== 'online');
+            aiLevelContainer.classList.toggle('hidden', mode !== 'pve'); onlineLobby.classList.toggle('hidden', mode !== 'online');
             document.getElementById('searchingOverlay').classList.add('hidden');
             boardElement.parentElement.parentElement.classList.toggle('hidden', mode === 'online'); document.getElementById('statusControlArea').classList.toggle('hidden', mode === 'online');
             onlineRoomBadge.classList.add('hidden'); gridSelectorContainer.classList.remove('hidden'); document.getElementById('chatPanel').classList.remove('open');
@@ -791,7 +819,13 @@
         function getWinningMove(p) { for (let i = 0; i < board.length; i++) { if (board[i] === '') { const tb = [...board]; tb[i] = p; if (checkWinCondition(tb, gridSize)?.winner === p) return i; } } return null; }
         function getStrategicMove() { const c = Math.floor(board.length / 2); if (board[c] === '') return c; const corners = [0, gridSize-1, board.length-gridSize, board.length-1].filter(i => board[i] === ''); return corners.length > 0 ? corners[Math.floor(Math.random() * corners.length)] : null; }
 
-        function updateTurnUI() { let activeName = currentPlayer === 'X' ? document.getElementById('labelX').innerText : document.getElementById('labelO').innerText; currentPlayerText.innerText = activeName.toUpperCase(); document.getElementById('turnPulse').className = `w-2 h-2 rounded-full animate-pulse ${currentPlayer === 'X' ? 'bg-[#d93025]' : 'bg-[#1a73e8]'}`; document.getElementById('boxX').style.borderColor = currentPlayer === 'X' ? '#d93025' : 'transparent'; document.getElementById('boxO').style.borderColor = currentPlayer === 'O' ? '#1a73e8' : 'transparent'; }
+        function updateTurnUI() { 
+            let activeName = currentPlayer === 'X' ? document.getElementById('labelX').innerHTML : document.getElementById('labelO').innerHTML; 
+            currentPlayerText.innerHTML = activeName.toUpperCase(); 
+            document.getElementById('turnPulse').className = `w-2 h-2 rounded-full animate-pulse ${currentPlayer === 'X' ? 'bg-[#d93025]' : 'bg-[#1a73e8]'}`; 
+            document.getElementById('boxX').style.borderColor = currentPlayer === 'X' ? '#d93025' : 'transparent'; 
+            document.getElementById('boxO').style.borderColor = currentPlayer === 'O' ? '#1a73e8' : 'transparent'; 
+        }
         function updateScoreBoard() { scoreXElement.innerText = scores.X; scoreOElement.innerText = scores.O; scoreDrawElement.innerText = scores.draw; }
         function showModal(msg, submsg) { winnerText.innerText = msg; document.getElementById('winnerSubtext').innerText = submsg; statusModal.classList.replace('hidden', 'flex'); setTimeout(() => document.getElementById('modalContent').classList.replace('scale-90', 'scale-100'), 10); }
         window.closeModal = () => { document.getElementById('modalContent').classList.replace('scale-100', 'scale-90'); setTimeout(() => statusModal.classList.replace('flex', 'hidden'), 200); };
@@ -802,7 +836,7 @@
         window.resetGame = () => { board = Array(gridSize * gridSize).fill(''); currentPlayer = 'X'; gameActive = true; onlineWinCounted = false; updateTurnUI(); initBoard(); };
         window.resetScores = () => { scores = { X: 0, O: 0, draw: 0 }; updateScoreBoard(); resetGame(); };
 
-        // --- ONLINE LOGIC ---
+        // --- ONLINE ---
         window.createNewRoom = async () => {
             initAudio(); playSFX('click'); if (!userId) return;
             const rid = Math.random().toString(36).substring(2, 8).toUpperCase(); currentRoomId = rid; mySymbol = 'X';
@@ -813,14 +847,8 @@
         window.joinRoom = async () => {
             initAudio(); playSFX('click'); const rid = document.getElementById('roomInput').value.trim().toUpperCase(); if (!rid || !userId) return;
             const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid)); 
-            
-            // PENGGUNAAN NOTIF KUSTOM UNTUK ROOM TIDAK DITEMUKAN
-            if (!snap.exists()) return showErrorModal("ERROR", "Room ID tidak ditemukan. Periksa kembali kode Anda!");
-            
-            const data = snap.data(); 
-            // PENGGUNAAN NOTIF KUSTOM UNTUK ROOM PENUH
-            if (data.players.O && data.players.O !== userId) return showErrorModal("PENUH", "Maaf, room ini sudah penuh oleh pemain lain!");
-            
+            if (!snap.exists()) return showErrorModal("ERROR", "Room ID tidak ditemukan!");
+            const data = snap.data(); if (data.players.O && data.players.O !== userId) return showErrorModal("PENUH", "Room ini sudah penuh!");
             if (!data.players.O && data.players.X !== userId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { "players.O": userId, "playerData.O": { name: userProfile.name, avatar: userProfile.avatar }, status: 'playing' });
             currentRoomId = rid; mySymbol = data.players.X === userId ? 'X' : 'O'; gridSelectorContainer.classList.add('hidden'); startRoomListener(rid);
         };
@@ -828,10 +856,10 @@
         window.startGlobalMatchmaking = async () => {
             initAudio(); playSFX('click'); if (!userId) return;
             onlineLobby.classList.add('hidden'); document.getElementById('searchingOverlay').classList.remove('hidden');
-            const matchmakingQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), where('status', '==', 'waiting'), where('isGlobal', '==', true), limit(1));
-            const querySnap = await getDocs(matchmakingQuery);
-            if (!querySnap.empty) {
-                const roomDoc = querySnap.docs[0]; const rid = roomDoc.id; const data = roomDoc.data();
+            const qMatch = query(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), where('status', '==', 'waiting'), where('isGlobal', '==', true), limit(1));
+            const qSnap = await getDocs(qMatch);
+            if (!qSnap.empty) {
+                const rDoc = qSnap.docs[0]; const rid = rDoc.id; const data = rDoc.data();
                 if (data.players.X !== userId) {
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { "players.O": userId, "playerData.O": { name: userProfile.name, avatar: userProfile.avatar }, status: 'playing' });
                     currentRoomId = rid; mySymbol = 'O'; document.getElementById('searchingOverlay').classList.add('hidden'); startRoomListener(rid);
@@ -843,10 +871,7 @@
             }
         };
 
-        window.cancelMatchmaking = async () => {
-            if (currentRoomId) { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId)); } catch(e) {} }
-            setMode('online');
-        };
+        window.cancelMatchmaking = async () => { if (currentRoomId) { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId)); } catch(e) {} } setMode('online'); };
 
         function startRoomListener(rid) {
             onlineLobby.classList.add('hidden'); document.getElementById('searchingOverlay').classList.add('hidden');
@@ -854,43 +879,18 @@
             document.getElementById('displayRoomId').innerText = rid;
 
             unsubscribeRoom = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), (snap) => {
-                // LOGIKA ROOM BUBAR: Snap tidak ada berarti dihapus pemain lawan
-                if (!snap.exists()) {
-                    if (currentRoomId) {
-                        currentRoomId = null; 
-                        showErrorModal("ROOM BUBAR", "Lawan telah meninggalkan permainan. Room otomatis ditutup.");
-                        setMode('online');
-                    }
-                    return; 
-                }
-
-                const data = snap.data(); 
-                if (data.isGlobal && data.status === 'waiting') {
-                    document.getElementById('searchingOverlay').classList.remove('hidden');
-                    boardElement.parentElement.parentElement.classList.add('hidden');
-                    document.getElementById('statusControlArea').classList.add('hidden');
-                } else {
-                    document.getElementById('searchingOverlay').classList.add('hidden');
-                    boardElement.parentElement.parentElement.classList.remove('hidden');
-                    document.getElementById('statusControlArea').classList.remove('hidden');
-                }
-
+                if (!snap.exists()) { if (currentRoomId) { currentRoomId = null; showErrorModal("BUBAR", "Lawan meninggalkan room."); setMode('online'); } return; }
+                const data = snap.data(); if (data.isGlobal && data.status === 'waiting') { document.getElementById('searchingOverlay').classList.remove('hidden'); boardElement.parentElement.parentElement.classList.add('hidden'); document.getElementById('statusControlArea').classList.add('hidden'); } else { document.getElementById('searchingOverlay').classList.add('hidden'); boardElement.parentElement.parentElement.classList.remove('hidden'); document.getElementById('statusControlArea').classList.remove('hidden'); }
                 board = data.board; gridSize = data.gridSize; currentPlayer = data.currentPlayer; gameActive = data.status !== 'finished'; if (data.scores) scores = data.scores;
-                const pX = data.playerData.X || { name: 'Pemain X', avatar: null }; const pO = data.playerData.O || { name: 'Menunggu...', avatar: null };
-                document.getElementById('labelX').innerText = pX.name; updateAvatarDisplay('X', pX.avatar);
-                document.getElementById('labelO').innerText = pO.name; updateAvatarDisplay('O', pO.avatar);
+                const pX = data.playerData.X || { name: 'X', avatar: null }; const pO = data.playerData.O || { name: 'Menunggu...', avatar: null };
+                document.getElementById('labelX').innerHTML = formatName(pX.name); updateAvatarDisplay('X', pX.avatar);
+                document.getElementById('labelO').innerHTML = formatName(pO.name); updateAvatarDisplay('O', pO.avatar);
                 updateScoreBoard(); initBoard(); updateTurnUI();
-                
                 if (data.status === 'finished') {
                     if (data.winner && data.winner !== 'draw') { drawWinningLine(data.winningLine); playSFX('win'); } else playSFX('draw');
                     showModal(data.winner === 'draw' ? "HASIL SERI" : (data.winner === mySymbol ? "ANDA MENANG!" : "ANDA KALAH!"), "Selesai.");
-                    if (data.winner === mySymbol && !onlineWinCounted) {
-                        onlineWinCounted = true;
-                        incrementLeaderboardWins();
-                    }
+                    if (data.winner === mySymbol && !onlineWinCounted) { onlineWinCounted = true; incrementLeaderboardWins(); }
                 } else if (data.status === 'playing') closeModal();
-            }, (error) => {
-                console.error("Room listener error:", error);
             });
 
             unsubscribeChat = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', rid, 'messages'), (snap) => {
@@ -909,7 +909,7 @@
             const container = document.getElementById('chatMessages'); container.innerHTML = '';
             msgs.forEach(m => {
                 const isMe = m.senderId === userId; const bubble = document.createElement('div'); bubble.className = `chat-bubble ${isMe ? 'chat-me' : 'chat-them'}`;
-                const sender = document.createElement('div'); sender.className = 'chat-sender'; sender.innerText = m.senderName || 'User';
+                const sender = document.createElement('div'); sender.className = 'chat-sender'; sender.innerHTML = formatName(m.senderName || 'User');
                 const txt = document.createElement('div'); txt.innerText = m.text;
                 if (!isMe) bubble.appendChild(sender); bubble.appendChild(txt); container.appendChild(bubble);
             });
