@@ -417,7 +417,7 @@
                     </div>
                 </div>
                 <svg id="winLineOverlay" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <line id="winLine" x1="0" y1="0" x2="0" y2="0" stroke="white" class="hidden" />
+                    <line id="winLine" x1="0" x2="0" stroke="white" class="hidden" />
                 </svg>
             </div>
 
@@ -686,7 +686,6 @@
         }
 
         // --- UTILS ---
-        // formatName baru: hanya tampilkan badge ADMIN jika showBadge diset ke true
         function formatName(name, showBadge = false) {
             const isFauzi = name.toUpperCase() === 'FAUZIDEV';
             let res = name;
@@ -731,7 +730,6 @@
             else { hImg.classList.add('hidden'); hFallback.classList.remove('hidden'); }
             document.getElementById('profileNameInput').value = userProfile.name;
             if (gameMode !== 'online') {
-                // Di Scoreboard tidak pakai tag ADMIN, hanya centang biru
                 document.getElementById('labelX').innerHTML = formatName(userProfile.name, false);
                 updateAvatarDisplay('X', userProfile.avatar);
                 document.getElementById('labelO').innerText = (gameMode === 'pve' ? 'BOT AI' : 'TEMAN');
@@ -834,13 +832,14 @@
                             <div class="text-[9px] text-gray-500 font-bold">UID: ${p.uid.substring(0,8)}... | Win: ${p.totalWins}</div>
                         </div>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
                         <button onclick="adminAdjustScore('${p.uid}', 1)" class="flex-1 bg-green-100 text-green-700 text-[8px] font-bold py-2 rounded-xl border border-green-200">+ SKOR</button>
                         <button onclick="adminAdjustScore('${p.uid}', -1)" class="flex-1 bg-orange-100 text-orange-700 text-[8px] font-bold py-2 rounded-xl border border-orange-200">- SKOR</button>
                         ${isBanned 
                             ? `<button onclick="adminRequestUnban('${p.uid}')" class="flex-1 bg-blue-600 text-white text-[8px] font-bold py-2 rounded-xl">UNBAN</button>`
                             : `<button onclick="adminRequestBan('${p.uid}')" class="flex-1 bg-red-600 text-white text-[8px] font-bold py-2 rounded-xl">BAN</button>`
                         }
+                        <button onclick="adminRequestDeleteAccount('${p.uid}')" class="flex-1 bg-gray-800 text-white text-[8px] font-bold py-2 rounded-xl">HAPUS AKUN</button>
                     </div>
                 `;
                 list.appendChild(item);
@@ -859,6 +858,15 @@
             showAdminConfirm("UNBAN PEMAIN", "Hapus blokir untuk pemain ini?", async () => {
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'banned', targetUid));
                 openAdminPanel();
+            });
+        };
+        window.adminRequestDeleteAccount = (targetUid) => {
+            showAdminConfirm("HAPUS AKUN", "Hapus semua data profil dan skor pemain ini dari leaderboard secara permanen?", async () => {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', targetUid));
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', targetUid, 'profile', 'data')).catch(() => {});
+                    openAdminPanel();
+                } catch(e) { console.error(e); }
             });
         };
         function showAdminConfirm(title, message, callback) {
@@ -1014,7 +1022,6 @@
         function getStrategicMove() { const c = Math.floor(board.length / 2); if (board[c] === '') return c; const corners = [0, gridSize-1, board.length-gridSize, board.length-1].filter(i => board[i] === ''); return corners.length > 0 ? corners[Math.floor(Math.random() * corners.length)] : null; }
 
         function updateTurnUI() { 
-            // Untuk Indikator Giliran, tampilkan tag ADMIN
             let activeName = currentPlayer === 'X' ? formatName(document.getElementById('labelX').innerText, true) : formatName(document.getElementById('labelO').innerText, true); 
             currentPlayerText.innerHTML = activeName; 
             document.getElementById('turnPulse').className = `w-2 h-2 rounded-full animate-pulse ${currentPlayer === 'X' ? 'bg-[#d93025]' : 'bg-[#1a73e8]'}`; 
@@ -1103,7 +1110,6 @@
             msgs.forEach(m => {
                 const isMe = m.senderId === userId; const bubble = document.createElement('div'); bubble.className = `chat-bubble ${isMe ? 'chat-me' : 'chat-them'}`;
                 const sender = document.createElement('div'); sender.className = 'chat-sender'; 
-                // Di obrolan tampilkan tag ADMIN
                 sender.innerHTML = formatName(m.senderName || 'User', true);
                 const txt = document.createElement('div'); txt.innerText = m.text;
                 if (!isMe) bubble.appendChild(sender); bubble.appendChild(txt); container.appendChild(bubble);
