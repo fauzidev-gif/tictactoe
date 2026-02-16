@@ -268,6 +268,18 @@
             vertical-align: middle;
             line-height: 1;
         }
+
+        /* STATS STYLE */
+        .stats-item {
+            flex: 1;
+            padding: 10px 5px;
+            border-radius: 16px;
+            background: #f8f9fa;
+            border: 1px solid #f1f3f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -509,8 +521,28 @@
 
         <!-- PROFILE MODAL -->
         <div id="profileModal" class="fixed inset-0 bg-[#202124]/40 backdrop-blur-sm hidden items-center justify-center z-50 p-6">
-            <div class="google-card p-8 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl" id="profileModalContent">
-                <h2 class="text-xl font-extrabold mb-6 text-[#1f1f1f] uppercase">Pengaturan Profil</h2>
+            <div class="google-card p-8 w-full max-w-xs text-center scale-90 transition-transform duration-300 shadow-2xl overflow-y-auto max-h-[90dvh]" id="profileModalContent">
+                <h2 class="text-xl font-extrabold mb-6 text-[#1f1f1f] uppercase">Profil Saya</h2>
+                
+                <!-- STATS SECTION -->
+                <div class="mb-6">
+                    <label class="block text-[10px] font-bold text-[#5f6368] uppercase mb-2">Statistik Akumulatif</label>
+                    <div class="flex gap-2">
+                        <div class="stats-item">
+                            <span id="statWin" class="text-lg font-black text-green-600">0</span>
+                            <span class="text-[7px] font-bold text-gray-400 uppercase">Menang</span>
+                        </div>
+                        <div class="stats-item">
+                            <span id="statLoss" class="text-lg font-black text-red-600">0</span>
+                            <span class="text-[7px] font-bold text-gray-400 uppercase">Kalah</span>
+                        </div>
+                        <div class="stats-item">
+                            <span id="statDraw" class="text-lg font-black text-gray-600">0</span>
+                            <span class="text-[7px] font-bold text-gray-400 uppercase">Seri</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mb-6 text-left">
                     <label class="block text-[10px] font-bold text-[#5f6368] uppercase mb-2">Nama Tampilan</label>
                     <input type="text" id="profileNameInput" maxlength="12" placeholder="Nama Anda" class="w-full bg-[#f1f3f4] border border-transparent rounded-2xl px-4 py-3 text-[#1f1f1f] font-bold outline-none focus:bg-white focus:border-[#1a73e8] transition-all">
@@ -637,7 +669,8 @@
             'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop',
             'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop'
         ];
-        let userProfile = { name: 'Pemain', avatar: null, totalWins: 0 };
+        // STRUKTUR DATA BARU: totalWins (Online), localWins, localLosses, localDraws
+        let userProfile = { name: 'Pemain', avatar: null, totalWins: 0, totalLosses: 0, totalDraws: 0 };
         let selectedAvatarUrl = null;
 
         const firebaseConfig = {
@@ -713,8 +746,14 @@
             if (!userId) return;
             const profileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
             const snap = await getDoc(profileRef);
-            if (snap.exists()) { userProfile = snap.data(); selectedAvatarUrl = userProfile.avatar; } 
-            else { userProfile = { name: 'Player' + Math.floor(1000 + Math.random() * 9000), avatar: null, totalWins: 0 }; await setDoc(profileRef, userProfile); }
+            if (snap.exists()) { 
+                userProfile = snap.data(); 
+                selectedAvatarUrl = userProfile.avatar; 
+            } 
+            else { 
+                userProfile = { name: 'Player' + Math.floor(1000 + Math.random() * 9000), avatar: null, totalWins: 0, totalLosses: 0, totalDraws: 0 }; 
+                await setDoc(profileRef, userProfile); 
+            }
             updateProfileUI();
             updateLeaderboardEntry();
             
@@ -729,6 +768,12 @@
             if (userProfile.avatar) { hImg.src = userProfile.avatar; hImg.classList.remove('hidden'); hFallback.classList.add('hidden'); } 
             else { hImg.classList.add('hidden'); hFallback.classList.remove('hidden'); }
             document.getElementById('profileNameInput').value = userProfile.name;
+            
+            // Update Stats Display in Modal
+            document.getElementById('statWin').innerText = userProfile.totalWins || 0;
+            document.getElementById('statLoss').innerText = userProfile.totalLosses || 0;
+            document.getElementById('statDraw').innerText = userProfile.totalDraws || 0;
+
             if (gameMode !== 'online') {
                 document.getElementById('labelX').innerHTML = formatName(userProfile.name, false);
                 updateAvatarDisplay('X', userProfile.avatar);
@@ -1009,10 +1054,37 @@
             } else { makeMove(index); if (gameActive && gameMode === 'pve' && currentPlayer === 'O') setTimeout(aiMove, 600); }
         }
 
+        // --- STATS LOGIC ---
+        async function incrementGlobalStat(type) {
+            if (!userId) return;
+            const update = {};
+            if (type === 'win') { update.totalWins = increment(1); userProfile.totalWins++; }
+            if (type === 'loss') { update.totalLosses = increment(1); userProfile.totalLosses++; }
+            if (type === 'draw') { update.totalDraws = increment(1); userProfile.totalDraws++; }
+            
+            await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), update);
+            if (type === 'win') await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', userId), { totalWins: increment(1) });
+            updateProfileUI();
+        }
+
         function makeMove(index) {
             board[index] = currentPlayer; const cell = boardElement.children[index]; cell.innerText = currentPlayer; cell.classList.add(currentPlayer === 'X' ? 'x-mark' : 'o-mark');
             const wd = checkWinCondition(board, gridSize);
-            if (wd) { if (wd.winner !== 'draw') { drawWinningLine(wd.line); scores[currentPlayer]++; playSFX('win'); } else { scores.draw++; playSFX('draw'); } updateScoreBoard(); setTimeout(() => showModal(wd.winner === 'draw' ? "HASIL SERI" : `PEMAIN ${currentPlayer} MENANG`, "Selesai."), 300); gameActive = false; } else { currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateTurnUI(); }
+            if (wd) { 
+                if (wd.winner !== 'draw') { 
+                    drawWinningLine(wd.line); scores[currentPlayer]++; playSFX('win'); 
+                    // Update Stat History: Jika Player X (user) menang, increment Win. Jika O menang, increment Loss.
+                    if (currentPlayer === 'X') incrementGlobalStat('win'); else incrementGlobalStat('loss');
+                } else { 
+                    scores.draw++; playSFX('draw'); 
+                    incrementGlobalStat('draw');
+                } 
+                updateScoreBoard(); 
+                setTimeout(() => showModal(wd.winner === 'draw' ? "HASIL SERI" : `PEMAIN ${currentPlayer} MENANG`, "Selesai."), 300); 
+                gameActive = false; 
+            } else { 
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateTurnUI(); 
+            }
         }
 
         window.changeDifficulty = (l) => { initAudio(); playSFX('click'); aiDifficulty = l; ['easy', 'medium', 'hard'].forEach(v => { const b = document.getElementById('diff' + v.charAt(0).toUpperCase() + v.slice(1)); const col = { easy: 'bg-[#1e8e3e]', medium: 'bg-[#f9ab00]', hard: 'bg-[#d93025]' }; b.className = (v === l) ? `px-3 py-1.5 rounded-full text-[10px] font-bold ${col[v]} text-white transition-all uppercase shadow-sm` : "px-3 py-1.5 rounded-full text-[10px] font-bold bg-[#ffffff] text-[#444746] border border-[#e0e0e0] transition-all uppercase shadow-sm"; }); resetGame(); };
@@ -1090,19 +1162,19 @@
                 if (data.status === 'finished') {
                     if (data.winner && data.winner !== 'draw') { drawWinningLine(data.winningLine); playSFX('win'); } else playSFX('draw');
                     showModal(data.winner === 'draw' ? "HASIL SERI" : (data.winner === mySymbol ? "ANDA MENANG!" : "ANDA KALAH!"), "Selesai.");
-                    if (data.winner === mySymbol && !onlineWinCounted) { onlineWinCounted = true; incrementLeaderboardWins(); }
+                    // Sync online wins/loss/draw to profile
+                    if (!onlineWinCounted) {
+                        onlineWinCounted = true;
+                        if (data.winner === 'draw') incrementGlobalStat('draw');
+                        else if (data.winner === mySymbol) incrementGlobalStat('win');
+                        else incrementGlobalStat('loss');
+                    }
                 } else if (data.status === 'playing') closeModal();
             });
             unsubscribeChat = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', rid, 'messages'), (snap) => {
                 const msgs = []; snap.forEach(d => msgs.push(d.data())); msgs.sort((a,b) => a.timestamp - b.timestamp); renderChat(msgs);
                 if (!document.getElementById('chatPanel').classList.contains('open') && msgs.length > 0) document.getElementById('chatDot').classList.remove('hidden');
             });
-        }
-
-        async function incrementLeaderboardWins() {
-            userProfile.totalWins = (userProfile.totalWins || 0) + 1;
-            await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), { totalWins: increment(1) });
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', userId), { totalWins: increment(1) });
         }
 
         function renderChat(msgs) {
