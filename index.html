@@ -280,6 +280,61 @@
             flex-direction: column;
             align-items: center;
         }
+
+        /* NEW: ACHIEVEMENTS STYLE */
+        .achievement-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #f1f3f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            filter: grayscale(1);
+            opacity: 0.4;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .achievement-badge.unlocked {
+            filter: grayscale(0);
+            opacity: 1;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: scale(1.05);
+        }
+        .achievement-badge.unlocked::after {
+            content: '✓';
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            background: #1e8e3e;
+            color: white;
+            font-size: 8px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
+        /* NEW: PING INDICATOR */
+        .ping-box {
+            font-size: 8px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 100px;
+            background: #f1f3f4;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ping-dot { width: 5px; height: 5px; border-radius: 50%; }
+        .ping-good { background: #1e8e3e; color: #1e8e3e; }
+        .ping-med { background: #f9ab00; color: #f9ab00; }
+        .ping-bad { background: #d93025; color: #d93025; }
+
     </style>
 </head>
 <body>
@@ -408,7 +463,14 @@
                         <button onclick="joinRoom()" class="bg-[#1f1f1f] hover:bg-[#000000] text-white font-bold px-6 rounded-2xl transition-all text-xs">Join</button>
                     </div>
                 </div>
-                <p id="connectionStatus" class="mt-4 text-[9px] text-[#5f6368] font-medium uppercase tracking-widest">Server: Menghubungkan...</p>
+                
+                <div class="mt-4 flex flex-col items-center gap-2">
+                    <p id="connectionStatus" class="text-[9px] text-[#5f6368] font-black uppercase tracking-widest">Server: Menghubungkan...</p>
+                    <div id="pingIndicator" class="ping-box hidden">
+                        <div id="pingDot" class="ping-dot ping-good"></div>
+                        <span id="pingValue">-- ms</span>
+                    </div>
+                </div>
             </div>
 
             <!-- SEARCHING OVERLAY -->
@@ -543,6 +605,14 @@
                     </div>
                 </div>
 
+                <!-- ACHIEVEMENTS SECTION -->
+                <div class="mb-6">
+                    <label class="block text-[10px] font-bold text-[#5f6368] uppercase mb-3">Pencapaian (Achievements)</label>
+                    <div id="achievementsGrid" class="grid grid-cols-4 gap-3">
+                        <!-- Badges will be rendered here -->
+                    </div>
+                </div>
+
                 <div class="mb-6 text-left">
                     <label class="block text-[10px] font-bold text-[#5f6368] uppercase mb-2">Nama Tampilan</label>
                     <input type="text" id="profileNameInput" maxlength="12" placeholder="Nama Anda" class="w-full bg-[#f1f3f4] border border-transparent rounded-2xl px-4 py-3 text-[#1f1f1f] font-bold outline-none focus:bg-white focus:border-[#1a73e8] transition-all">
@@ -631,7 +701,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc, collection, addDoc, increment, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc, collection, addDoc, increment, query, where, getDocs, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- VERIFIED BADGE SVG HD ---
         const BLUE_CHECK = `<svg class="verified-badge" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L13.8 4.3L16.6 3.9L17.5 6.6L20.2 7.5L19.8 10.3L22.1 12.1L19.8 13.9L20.2 16.7L17.5 17.6L16.6 20.3L13.8 19.9L12 22.2L10.2 19.9L7.4 20.3L6.5 17.6L3.8 16.7L4.2 13.9L1.9 12.1L4.2 10.3L3.8 7.5L6.5 6.6L7.4 3.9L10.2 4.3L12 2Z" fill="#0095F6"/><path d="M16.5 9.5L10.5 15.5L7.5 12.5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -653,6 +723,15 @@
             else { initAudio(); svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />'; }
         };
 
+        // --- ACHIEVEMENTS LIST ---
+        const ACHIEVEMENTS = [
+            { id: 'first_win', title: 'Pemenang Pertama', icon: '🏆', desc: 'Menangkan 1 game Online', goal: 1, type: 'totalWins' },
+            { id: 'pakar_ttc', title: 'Pakar Tic Tac Toe', icon: '🎖️', desc: 'Menangkan 10 game Online', goal: 10, type: 'totalWins' },
+            { id: 'legend_hidup', title: 'Legenda Hidup', icon: '👑', desc: 'Menangkan 50 game Online', goal: 50, type: 'totalWins' },
+            { id: 'penjaga_seri', title: 'Sang Penjaga', icon: '🛡️', desc: 'Dapatkan 10 kali hasil Seri', goal: 10, type: 'totalDraws' },
+            { id: 'pemain_aktif', title: 'Pemain Aktif', icon: '⚡', desc: 'Mainkan total 100 ronde', goal: 100, type: 'totalPlayed' }
+        ];
+
         // --- GAME STATE ---
         let gridSize = 3, board = Array(9).fill(''), currentPlayer = 'X', gameActive = true, gameMode = 'pvp', aiDifficulty = 'easy', scores = { X: 0, O: 0, draw: 0 };
         let db, auth, userId, currentRoomId = null, mySymbol = null, unsubscribeRoom = null, unsubscribeChat = null;
@@ -669,8 +748,8 @@
             'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop',
             'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop'
         ];
-        // STRUKTUR DATA BARU: totalWins (Online), localWins, localLosses, localDraws
-        let userProfile = { name: 'Pemain', avatar: null, totalWins: 0, totalLosses: 0, totalDraws: 0 };
+        
+        let userProfile = { name: 'Pemain', avatar: null, totalWins: 0, totalLosses: 0, totalDraws: 0, totalPlayed: 0, unlockedAchievements: [] };
         let selectedAvatarUrl = null;
 
         const firebaseConfig = {
@@ -697,9 +776,30 @@
                 if (s) s.innerText = "Server: Online (" + userId.substring(0,4) + ")"; 
                 await loadUserProfile(); 
                 checkBanStatus(); 
+                startPingMonitor();
             } 
         });
         initAuth();
+
+        // --- PING MONITOR ---
+        async function startPingMonitor() {
+            const pingVal = document.getElementById('pingValue');
+            const pingDot = document.getElementById('pingDot');
+            const pingBox = document.getElementById('pingIndicator');
+
+            setInterval(async () => {
+                if (gameMode !== 'online') { pingBox.classList.add('hidden'); return; }
+                pingBox.classList.remove('hidden');
+                
+                const start = Date.now();
+                try {
+                    await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'ping_check', 'heartbeat'));
+                    const latency = Date.now() - start;
+                    pingVal.innerText = latency + ' ms';
+                    pingDot.className = 'ping-dot ' + (latency < 150 ? 'ping-good' : latency < 400 ? 'ping-med' : 'ping-bad');
+                } catch (e) { pingVal.innerText = 'Err'; }
+            }, 10000);
+        }
 
         // --- ADMIN HELPERS ---
         async function checkBanStatus() {
@@ -747,11 +847,11 @@
             const profileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
             const snap = await getDoc(profileRef);
             if (snap.exists()) { 
-                userProfile = snap.data(); 
+                userProfile = { ...userProfile, ...snap.data() }; 
                 selectedAvatarUrl = userProfile.avatar; 
             } 
             else { 
-                userProfile = { name: 'Player' + Math.floor(1000 + Math.random() * 9000), avatar: null, totalWins: 0, totalLosses: 0, totalDraws: 0 }; 
+                userProfile = { name: 'Player' + Math.floor(1000 + Math.random() * 9000), avatar: null, totalWins: 0, totalLosses: 0, totalDraws: 0, totalPlayed: 0, unlockedAchievements: [] }; 
                 await setDoc(profileRef, userProfile); 
             }
             updateProfileUI();
@@ -769,10 +869,11 @@
             else { hImg.classList.add('hidden'); hFallback.classList.remove('hidden'); }
             document.getElementById('profileNameInput').value = userProfile.name;
             
-            // Update Stats Display in Modal
             document.getElementById('statWin').innerText = userProfile.totalWins || 0;
             document.getElementById('statLoss').innerText = userProfile.totalLosses || 0;
             document.getElementById('statDraw').innerText = userProfile.totalDraws || 0;
+
+            renderAchievements();
 
             if (gameMode !== 'online') {
                 document.getElementById('labelX').innerHTML = formatName(userProfile.name, false);
@@ -780,6 +881,23 @@
                 document.getElementById('labelO').innerText = (gameMode === 'pve' ? 'BOT AI' : 'TEMAN');
                 updateAvatarDisplay('O', gameMode === 'pve' ? 'https://ui-avatars.com/api/?name=BOT&background=000&color=fff' : null);
             }
+        }
+
+        function renderAchievements() {
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '';
+            ACHIEVEMENTS.forEach(ach => {
+                const isUnlocked = userProfile.unlockedAchievements?.includes(ach.id);
+                const badge = document.createElement('div');
+                badge.className = `achievement-badge ${isUnlocked ? 'unlocked' : ''}`;
+                badge.innerHTML = `<span class="text-xl">${ach.icon}</span>`;
+                badge.title = `${ach.title}: ${ach.desc}`;
+                badge.onclick = () => {
+                    const status = isUnlocked ? "DIPEROLEH" : "TERKUNCI";
+                    showErrorModal(`${ach.title} (${status})`, ach.desc);
+                };
+                grid.appendChild(badge);
+            });
         }
 
         async function updateLeaderboardEntry() {
@@ -891,7 +1009,7 @@
             });
         }
 
-        // --- CUSTOM ADMIN CONFIRM DIALOG ---
+        // --- ADMIN CONFIRM DIALOG ---
         let adminAction = null;
         window.adminRequestBan = (targetUid) => {
             showAdminConfirm("BAN PEMAIN", "Apakah Anda yakin ingin memblokir akses pemain ini secara permanen?", async () => {
@@ -1054,16 +1172,43 @@
             } else { makeMove(index); if (gameActive && gameMode === 'pve' && currentPlayer === 'O') setTimeout(aiMove, 600); }
         }
 
-        // --- STATS LOGIC ---
+        // --- STATS & ACHIEVEMENTS LOGIC ---
+        async function checkAchievements() {
+            if (!userId) return;
+            const newlyUnlocked = [];
+            ACHIEVEMENTS.forEach(ach => {
+                if (userProfile.unlockedAchievements?.includes(ach.id)) return;
+                const currentVal = userProfile[ach.type] || 0;
+                if (currentVal >= ach.goal) {
+                    newlyUnlocked.push(ach.id);
+                    // Toast Notification for Achievement
+                    const toast = document.getElementById('toast');
+                    toast.innerText = `UNLOCK: ${ach.title}!`;
+                    toast.style.opacity = '1';
+                    setTimeout(() => toast.style.opacity = '0', 3000);
+                }
+            });
+
+            if (newlyUnlocked.length > 0) {
+                userProfile.unlockedAchievements = [...(userProfile.unlockedAchievements || []), ...newlyUnlocked];
+                await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), { unlockedAchievements: userProfile.unlockedAchievements });
+                renderAchievements();
+            }
+        }
+
         async function incrementGlobalStat(type) {
             if (!userId) return;
-            const update = {};
+            const update = { totalPlayed: increment(1) };
+            userProfile.totalPlayed = (userProfile.totalPlayed || 0) + 1;
+
             if (type === 'win') { update.totalWins = increment(1); userProfile.totalWins++; }
             if (type === 'loss') { update.totalLosses = increment(1); userProfile.totalLosses++; }
             if (type === 'draw') { update.totalDraws = increment(1); userProfile.totalDraws++; }
             
             await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), update);
             if (type === 'win') await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', userId), { totalWins: increment(1) });
+            
+            checkAchievements();
             updateProfileUI();
         }
 
@@ -1073,7 +1218,6 @@
             if (wd) { 
                 if (wd.winner !== 'draw') { 
                     drawWinningLine(wd.line); scores[currentPlayer]++; playSFX('win'); 
-                    // Update Stat History: Jika Player X (user) menang, increment Win. Jika O menang, increment Loss.
                     if (currentPlayer === 'X') incrementGlobalStat('win'); else incrementGlobalStat('loss');
                 } else { 
                     scores.draw++; playSFX('draw'); 
@@ -1162,7 +1306,6 @@
                 if (data.status === 'finished') {
                     if (data.winner && data.winner !== 'draw') { drawWinningLine(data.winningLine); playSFX('win'); } else playSFX('draw');
                     showModal(data.winner === 'draw' ? "HASIL SERI" : (data.winner === mySymbol ? "ANDA MENANG!" : "ANDA KALAH!"), "Selesai.");
-                    // Sync online wins/loss/draw to profile
                     if (!onlineWinCounted) {
                         onlineWinCounted = true;
                         if (data.winner === 'draw') incrementGlobalStat('draw');
