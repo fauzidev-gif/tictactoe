@@ -1,5381 +1,1969 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Tic Tac Toe Pro Ultra - Fixed</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tic Tac Toe - Google Style</title>
+    <!-- Google Fonts: Google Sans & Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@500;700;800&family=Roboto:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK (v11) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-<script src="https://cdn.tailwindcss.com"></script>
+        window.FirebaseModule = {
+            initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged,
+            getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, where, getDocs, deleteDoc
+        };
+    </script>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+    <style>
+        :root {
+            /* Warna khas Google */
+            --google-blue: #4285F4;
+            --google-blue-dark: #2B6CB0;
+            --google-red: #EA4335;
+            --google-yellow: #FBBC05;
+            --google-yellow-dark: #D9A000;
+            --google-green: #34A853;
+            
+            /* Background & Surface */
+            --bg-color: #F8F9FA;
+            --tile-bg: #E8EAED;
+            --tile-shadow: #DADCE0;
+            --text-dark: #202124;
+            --text-sub: #5F6368;
+            
+            /* 3D Gray Button Surface */
+            --3d-gray-bg: #BDC1C6;
+            --3d-gray-shadow: #9AA0A6;
+            
+            --radius-round: 999px;
+            --radius-card: 24px;
+        }
 
-html,body{
-    overflow:hidden;
-    overscroll-behavior:none;
-    user-select:none;
-    -webkit-user-select:none;
-    -webkit-touch-callout:none;
-    touch-action:none;
-    height:100%;
-    width:100%;
-    position:fixed;
-    background:#fff;
-}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
 
-input{
-    user-select:text!important;
-    -webkit-user-select:text!important;
-    touch-action:auto!important;
-}
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background-color: var(--bg-color);
+        }
 
-body{
-    font-family:Poppins,sans-serif;
-    color:#1f1f1f;
-}
+        body {
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+        }
 
-.app-container{
-    display:flex;
-    flex-direction:column;
-    height:100dvh;
-    width:100%;
-    max-width:480px;
-    margin:auto;
-    padding:1.25rem;
-    position:relative;
-}
+        .container {
+            width: 100%;
+            max-width: 360px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
 
-.google-card{
-    background:#fff;
-    border-radius:28px;
-    box-shadow:
-        0 1px 3px rgba(0,0,0,.05),
-        0 4px 12px rgba(0,0,0,.08);
-    border:1px solid #f1f3f4;
-}
+        /* ===== 1. HEADER UTAMA ===== */
+        .top-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 4px;
+        }
 
-.mode-tabs{
-    background:#f1f3f4;
-    border-radius:100px;
-    padding:6px;
-    display:flex;
-    gap:4px;
-}
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            user-select: none;
+        }
 
-.mode-tab{
-    padding:10px 16px;
-    border-radius:100px;
-    font-size:11px;
-    font-weight:600;
-    text-transform:uppercase;
-    letter-spacing:.8px;
-    transition:.3s;
-    flex:1;
-    text-align:center;
-    color:#444746;
-}
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-.mode-tab.active{
-    background:#fff;
-    color:#1a73e8;
-    box-shadow:0 1px 2px rgba(0,0,0,.1);
-}
+        /* Tombol Header Dengan Desain 3D Ala Kotak Seri */
+        .btn-header-3d {
+            background-color: var(--3d-gray-bg);
+            box-shadow: inset 0 -4px 0 var(--3d-gray-shadow);
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.08s ease;
+        }
 
-.board-container{
-    background:#f1f3f4;
-    border-radius:36px;
-    padding:12px;
-    box-shadow:inset 0 2px 8px rgba(0,0,0,.04);
-    border:1px solid #e0e0e0;
-}
+        .btn-header-3d:active {
+            transform: translateY(2px);
+            box-shadow: inset 0 -2px 0 var(--3d-gray-shadow);
+            background-color: #B0B4B9;
+        }
 
-.cell{
-    aspect-ratio:1/1;
-    background:#fff;
-    border-radius:22px;
-    transition:.2s;
-    z-index:10;
-    border:1px solid #f1f3f4;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    box-shadow:0 2px 4px rgba(0,0,0,.04);
-    font-weight:800;
-}
+        .btn-header-3d svg {
+            width: 22px;
+            height: 22px;
+            fill: #202124;
+        }
 
-.cell:active{
-    transform:scale(.92);
-    background:#f8f9fa;
-}
+        /* Banner Status Online */
+        .online-status-badge {
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: var(--radius-round);
+            background-color: #E8F0FE;
+            color: var(--google-blue);
+            border: 1px solid #D2E3FC;
+            display: none;
+            text-align: center;
+            width: 100%;
+        }
 
-.x-mark{
-    color:#d93025;
-    filter:drop-shadow(0 2px 6px rgba(217,48,37,.2));
-}
+        /* ===== 2. PAPAN PERMAINAN ===== */
+        .board-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+        }
 
-.o-mark{
-    color:#1a73e8;
-    filter:drop-shadow(0 2px 6px rgba(26,115,232,.2));
-}
+        .board {
+            display: grid;
+            grid-gap: 10px;
+            width: min(82vw, 310px);
+            height: min(82vw, 310px);
+            box-sizing: border-box;
+        }
 
-#board.grid-3{grid-template-columns:repeat(3,1fr)}
-#board.grid-4{grid-template-columns:repeat(4,1fr)}
-#board.grid-5{grid-template-columns:repeat(5,1fr)}
+        .cell {
+            background-color: var(--tile-bg);
+            box-shadow: inset 0 -4px 0 var(--tile-shadow);
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: background-color 0.12s ease;
+        }
 
-#winLineOverlay{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    pointer-events:none;
-    z-index:30;
-    padding:12px;
-}
+        .cell:active:not(.occupied) {
+            background-color: #D2D6DC;
+        }
 
-#winLine{
-    stroke-dasharray:1000;
-    stroke-dashoffset:1000;
-    animation:drawLine .6s ease forwards;
-    stroke-linecap:round;
-    stroke-width:7;
-}
+        .cell.occupied {
+            cursor: default;
+        }
 
-@keyframes drawLine{
-    to{stroke-dashoffset:0}
-}
+        .icon {
+            width: 52%;
+            height: 52%;
+            display: block;
+        }
 
-.mute-btn{
-    background:#fff;
-    width:44px;
-    height:44px;
-    border-radius:50%;
-    color:#444746;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    transition:.2s;
-    border:1px solid #e0e0e0;
-    box-shadow:0 2px 4px rgba(0,0,0,.06);
-}
+        .cell.winning-cell {
+            background-color: #E8F0FE;
+            box-shadow: inset 0 -4px 0 #D2E3FC;
+        }
 
-.mute-btn:active{
-    transform:scale(.9);
-}
+        /* ===== 3. AREA BAWAH ===== */
+        .bottom-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 6px;
+        }
 
-.avatar-img{
-    width:100%;
-    height:100%;
-    border-radius:50%;
-    object-fit:cover;
-}
+        .turn-box-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
 
-.avatar-option{
-    width:58px;
-    height:58px;
-    border-radius:50%;
-    overflow:hidden;
-    border:3px solid transparent;
-    cursor:pointer;
-    transition:.2s;
-    background:#f1f3f4;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
+        .turn-card {
+            background-color: var(--3d-gray-bg);
+            color: #202124;
+            box-shadow: inset 0 -4px 0 var(--3d-gray-shadow);
+            border-radius: 18px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: calc(33.33% - 7px);
+            text-align: center;
+            user-select: none;
+            white-space: nowrap;
+        }
 
-.avatar-option.selected{
-    border-color:#1a73e8;
-    transform:scale(1.1);
-    box-shadow:0 4px 12px rgba(26,115,232,.3);
-}
+        .turn-text {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
 
-.score-avatar{
-    width:20px;
-    height:20px;
-    border-radius:50%;
-    object-fit:cover;
-    border:1px solid #e0e0e0;
-}
+        /* Board Skor 3 Kolom */
+        .scoreboard {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 10px;
+        }
 
-.verified-badge{
-    width:16px;
-    height:16px;
-    display:inline-flex;
-    margin-left:3px;
-    vertical-align:middle;
-    flex-shrink:0;
-}
+        .score-card {
+            border-radius: 18px;
+            padding: 10px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            text-align: center;
+            user-select: none;
+        }
 
-.admin-btn{
-    background:linear-gradient(135deg,#1f1f1f,#3c4043);
-    color:#fb8c00;
-    border:1px solid #5f6368;
-}
+        .score-card.x-card {
+            background-color: var(--google-blue);
+            color: #FFFFFF;
+            box-shadow: inset 0 -4px 0 var(--google-blue-dark);
+        }
 
-.stats-item{
-    flex:1;
-    padding:12px 5px;
-    border-radius:20px;
-    background:#f8f9fa;
-    border:1px solid #f1f3f4;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-}
+        .score-card.ties-card {
+            background-color: var(--3d-gray-bg);
+            color: #202124;
+            box-shadow: inset 0 -4px 0 var(--3d-gray-shadow);
+        }
 
-.achievement-card{
-    background:#f8f9fa;
-    border:1px solid #f1f3f4;
-    border-radius:20px;
-    padding:12px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:10px;
-}
+        .score-card.o-card {
+            background-color: var(--google-yellow);
+            color: #202124;
+            box-shadow: inset 0 -4px 0 var(--google-yellow-dark);
+        }
 
-.achievement-card.unlocked{
-    background:#fff;
-    border-color:#e8f0fe;
-    box-shadow:0 4px 12px rgba(0,0,0,.04);
-}
+        .score-title {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            opacity: 0.9;
+        }
 
-.achievement-badge{
-    width:44px;
-    height:44px;
-    border-radius:14px;
-    background:#f1f3f4;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-    color:#bdc1c6;
-}
+        .score-num {
+            font-size: 1.25rem;
+            font-weight: 900;
+        }
 
-.achievement-card.unlocked .achievement-badge{
-    background:#e8f0fe;
-    color:#1a73e8;
-}
+        /* ===== 4. POPUP MODAL TERPISAH ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(32, 33, 36, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            padding: 20px;
+        }
 
-#chatPanel{
-    position:absolute;
-    bottom:0;
-    left:0;
-    right:0;
-    background:white;
-    z-index:100;
-    border-radius:32px 32px 0 0;
-    transform:translateY(100%);
-    transition:transform .4s ease;
-    display:flex;
-    flex-direction:column;
-    box-shadow:0 -10px 40px rgba(0,0,0,.15);
-    max-height:80dvh;
-}
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-#chatPanel.open{
-    transform:translateY(0);
-}
+        .modal-card {
+            background-color: #FFFFFF;
+            width: 100%;
+            max-width: 330px;
+            border-radius: var(--radius-card);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-height: 88vh;
+            overflow-y: auto;
+            transform: translateY(20px) scale(0.95);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
-.chat-bubble{
-    max-width:80%;
-    padding:8px 12px;
-    border-radius:18px;
-    margin-bottom:8px;
-    font-size:13px;
-    line-height:1.4;
-    word-wrap:break-word;
-}
+        .modal-overlay.active .modal-card {
+            transform: translateY(0) scale(1);
+        }
 
-.chat-me{
-    background:#1a73e8;
-    color:white;
-    align-self:flex-end;
-    border-bottom-right-radius:4px;
-}
+        .modal-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid #E8EAED;
+            padding-bottom: 10px;
+        }
 
-.chat-them{
-    background:#f1f3f4;
-    color:#1f1f1f;
-    align-self:flex-start;
-    border-bottom-left-radius:4px;
-}
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            text-align: center;
+        }
 
-.chat-sender{
-    font-size:9px;
-    font-weight:700;
-    margin-bottom:2px;
-    text-transform:uppercase;
-    opacity:.7;
-}
+        .setting-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
 
-.pulse-searching{
-    animation:pulse-ring 1.5s infinite;
-}
+        .setting-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-@keyframes pulse-ring{
-    0%{
-        transform:scale(.95);
-        box-shadow:0 0 0 0 rgba(26,115,232,.7);
-    }
-    70%{
-        transform:scale(1);
-        box-shadow:0 0 0 10px rgba(26,115,232,0);
-    }
-    100%{
-        transform:scale(.95);
-        box-shadow:0 0 0 0 rgba(26,115,232,0);
-    }
-}
+        .option-group {
+            display: flex;
+            background-color: #F1F3F4;
+            padding: 4px;
+            border-radius: var(--radius-round);
+            gap: 4px;
+            flex-wrap: wrap;
+        }
 
-.ping-box{
-    font-size:8px;
-    font-weight:800;
-    padding:2px 8px;
-    border-radius:100px;
-    background:#f1f3f4;
-    display:flex;
-    align-items:center;
-    gap:4px;
-}
+        .option-btn {
+            flex: 1;
+            padding: 8px 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-sub);
+            font-weight: 700;
+            font-size: 0.72rem;
+            border-radius: var(--radius-round);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            white-space: nowrap;
+        }
 
-.ping-dot{
-    width:5px;
-    height:5px;
-    border-radius:50%;
-}
+        .option-btn.active {
+            background: var(--google-blue);
+            color: #FFFFFF;
+            box-shadow: 0 2px 6px rgba(66, 133, 244, 0.3);
+        }
 
-.ping-good{background:#1e8e3e}
-.ping-med{background:#f9ab00}
-.ping-bad{background:#d93025}
+        /* Input Kode Room Online */
+        .room-input-box {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+        }
 
-.profile-tabs{
-    display:flex;
-    border-bottom:1px solid #f1f3f4;
-    margin-bottom:20px;
-}
+        .room-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #DADCE0;
+            border-radius: var(--radius-round);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            outline: none;
+            background: #F8F9FA;
+        }
 
-.profile-tab{
-    flex:1;
-    padding:12px 0;
-    font-size:10px;
-    font-weight:800;
-    color:#5f6368;
-    text-transform:uppercase;
-    position:relative;
-}
+        .room-input:focus {
+            border-color: var(--google-blue);
+            background: #FFFFFF;
+        }
 
-.profile-tab.active{
-    color:#1a73e8;
-}
+        .btn-room-action {
+            padding: 10px 14px;
+            border: none;
+            border-radius: var(--radius-round);
+            background-color: var(--google-green);
+            color: white;
+            font-weight: 800;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
 
-.profile-tab.active:after{
-    content:"";
-    position:absolute;
-    bottom:0;
-    left:20%;
-    right:20%;
-    height:3px;
-    background:#1a73e8;
-    border-radius:100px;
-}
+        .btn-save {
+            background-color: var(--google-blue);
+            color: #FFFFFF;
+            border: none;
+            padding: 12px;
+            border-radius: var(--radius-round);
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(66, 133, 244, 0.35);
+            margin-top: 4px;
+            transition: background-color 0.15s ease;
+        }
 
-.watermark{
-    text-align:center;
-    font-size:10px;
-    font-weight:700;
-    color:#bdc1c6;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    margin-top:1rem;
-}
-</style>
+        .btn-save:active {
+            background-color: var(--google-blue-dark);
+        }
+
+        /* ===== LEADERBOARD STYLING ===== */
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background-color: #F8F9FA;
+            border-radius: 14px;
+            border: 1px solid #E8EAED;
+        }
+
+        .leaderboard-item.top3 {
+            background-color: #FEF7E0;
+            border-color: #FCE8E6;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rank-badge {
+            font-size: 0.8rem;
+            font-weight: 900;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #E8EAED;
+            color: var(--text-dark);
+        }
+
+        .rank-badge.rank-1 { background: var(--google-yellow); color: #202124; }
+        .rank-badge.rank-2 { background: #BDC1C6; color: #202124; }
+        .rank-badge.rank-3 { background: #E09A67; color: white; }
+
+        .player-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .win-count {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--google-green);
+        }
+
+        .username-input-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 2px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive Layout untuk Layar Kecil */
+        @media (max-height: 600px) {
+            body { padding: 8px 12px; }
+            .container { gap: 8px; }
+            .board { width: min(72vw, 250px); height: min(72vw, 250px); grid-gap: 8px; }
+            .score-card { padding: 6px 2px; }
+            .score-num { font-size: 1.1rem; }
+            .btn-header-3d { width: 38px; height: 38px; }
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="app-container">
+    <div class="container">
+        <!-- 1. Header Atas -->
+        <div class="top-header">
+            <div class="logo-box">
+                <span style="color: var(--google-blue);">X</span>
+                <span style="color: var(--google-yellow);">O</span>
+            </div>
 
-<header class="shrink-0 text-center mb-6">
-
-    <div class="flex items-center justify-between mb-4">
-
-        <div class="flex gap-2">
-
-            <button
-                onclick="openProfileModal()"
-                class="w-10 h-10 rounded-full border border-[#e0e0e0] overflow-hidden shadow-sm active:scale-90 bg-[#f1f3f4] flex items-center justify-center">
-
-                <img id="headerAvatar" class="avatar-img hidden">
-
-                <svg id="headerAvatarFallback"
-                     class="w-5 h-5 text-gray-500"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="2">
-                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-
-            </button>
-
-            <button
-                id="adminTrigger"
-                onclick="openAdminPanel()"
-                class="w-10 h-10 rounded-full admin-btn hidden items-center justify-center active:scale-90">
-
-                🛡️
-
-            </button>
-
-        </div>
-
-        <h1 class="text-xl font-bold tracking-tight">
-            Tic Tac <span class="text-blue-600">Toe</span> Pro
-        </h1>
-
-        <button
-            onclick="openLeaderboard()"
-            class="w-10 h-10 rounded-full border border-[#e0e0e0] flex items-center justify-center shadow-sm bg-white text-[#f9ab00]">
-
-            🏆
-
-        </button>
-
-    </div>
-
-    <div id="onlineRoomBadge" class="hidden mb-4">
-
-        <div class="flex items-center justify-center gap-2">
-
-            <div class="inline-flex items-center gap-2 bg-[#e8f0fe] text-[#1a73e8] px-5 py-2 rounded-full border border-[#aecbfa]">
-
-                <span class="text-[10px] font-bold uppercase">
-                    Room ID:
-                </span>
-
-                <span id="displayRoomId"
-                      class="font-mono font-bold tracking-wider">
-                    ------
-                </span>
-
-                <button onclick="copyRoomId()">
-                    📋
+            <!-- Action Buttons Header (3D) -->
+            <div class="header-actions">
+                <!-- Tombol Papan Peringkat (Tropi 3D) -->
+                <button class="btn-header-3d" onclick="openLeaderboardModal()" title="Peringkat Global">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V18H8v2h8v-2h-3v-2.1c2.12-.39 3.75-1.93 4.39-4.04C19.08 11.63 21 9.55 21 7V6c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                    </svg>
                 </button>
 
-            </div>
-
-            <button
-                onclick="toggleChat()"
-                class="relative bg-white p-2.5 rounded-full border shadow-sm">
-
-                💬
-
-                <span
-                    id="chatDot"
-                    class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white hidden">
-                </span>
-
-            </button>
-
-        </div>
-
-    </div>
-
-    <div class="flex items-center gap-3">
-
-        <div id="boxX"
-             class="google-card p-3 flex-1 flex flex-col items-center border-b-4 border-transparent">
-
-            <div class="flex items-center gap-1.5 mb-1">
-
-                <div class="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
-
-                    <img id="avatarX" class="score-avatar hidden">
-
-                    <span id="fallbackX">👤</span>
-
-                </div>
-
-                <span
-                    id="labelX"
-                    class="text-[9px] font-bold text-[#5f6368] uppercase truncate max-w-[80px]">
-                    Pemain X
-                </span>
-
-            </div>
-
-            <span
-                id="scoreX"
-                class="text-2xl font-bold text-[#d93025]">
-                0
-            </span>
-
-        </div>
-
-        <div class="google-card p-2 px-4 shrink-0 flex flex-col items-center bg-[#f1f3f4]">
-
-            <span class="text-[9px] font-bold text-[#5f6368] uppercase">
-                Draw
-            </span>
-
-            <span id="scoreDraw"
-                  class="text-xl font-bold">
-                0
-            </span>
-
-        </div>
-
-        <div id="boxO"
-             class="google-card p-3 flex-1 flex flex-col items-center border-b-4 border-transparent">
-
-            <div class="flex items-center gap-1.5 mb-1">
-
-                <div class="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center">
-
-                    <img id="avatarO" class="score-avatar hidden">
-
-                    <span id="fallbackO">👤</span>
-
-                </div>
-
-                <span
-                    id="labelO"
-                    class="text-[9px] font-bold text-[#5f6368] uppercase truncate max-w-[70px]">
-                    Pemain O
-                </span>
-
-            </div>
-
-            <span
-                id="scoreO"
-                class="text-2xl font-bold text-[#1a73e8]">
-                0
-            </span>
-
-        </div>
-
-    </div>
-
-</header>
-
-
-<main class="flex flex-col overflow-y-auto">
-
-<div id="gameSettings" class="flex flex-col gap-4 mb-6 px-1">
-
-    <div id="gridSelectorContainer"
-         class="flex items-center justify-between">
-
-        <span class="text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">
-            Pilih Grid
-        </span>
-
-        <div class="flex gap-2">
-
-            <button id="grid3"
-                    onclick="changeGrid(3)"
-                    class="px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#1a73e8] text-white">
-                3x3
-            </button>
-
-            <button id="grid4"
-                    onclick="changeGrid(4)"
-                    class="px-4 py-1.5 rounded-full text-[10px] font-bold bg-white border">
-                4x4
-            </button>
-
-            <button id="grid5"
-                    onclick="changeGrid(5)"
-                    class="px-4 py-1.5 rounded-full text-[10px] font-bold bg-white border">
-                5x5
-            </button>
-
-        </div>
-
-    </div>
-
-    <div id="aiLevelContainer"
-         class="hidden flex items-center justify-between">
-
-        <span class="text-[10px] font-bold text-[#5f6368] uppercase">
-            Level AI
-        </span>
-
-        <div class="flex gap-2">
-
-            <button id="diffEasy"
-                    onclick="changeDifficulty('easy')"
-                    class="px-3 py-1.5 rounded-full text-[10px] font-bold bg-green-600 text-white">
-                EASY
-            </button>
-
-            <button id="diffMedium"
-                    onclick="changeDifficulty('medium')"
-                    class="px-3 py-1.5 rounded-full text-[10px] font-bold bg-white border">
-                MED
-            </button>
-
-            <button id="diffHard"
-                    onclick="changeDifficulty('hard')"
-                    class="px-3 py-1.5 rounded-full text-[10px] font-bold bg-white border">
-                HARD
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<div class="mode-tabs mb-6">
-
-    <button
-        id="btnPvp"
-        onclick="setMode('pvp')"
-        class="mode-tab active">
-        Teman
-    </button>
-
-    <button
-        id="btnPve"
-        onclick="setMode('pve')"
-        class="mode-tab">
-        Bot AI
-    </button>
-
-    <button
-        id="btnOnline"
-        onclick="setMode('online')"
-        class="mode-tab">
-        Online
-    </button>
-
-</div>
-
-
-<div id="onlineLobby"
-     class="hidden google-card p-6 mb-6 text-center">
-
-    <h3 class="text-sm font-bold mb-4 text-blue-600 uppercase">
-        Multiplayer Online
-    </h3>
-
-    <button
-        onclick="startGlobalMatchmaking()"
-        class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg mb-4">
-
-        🌐 CARI LAWAN GLOBAL
-
-    </button>
-
-    <div class="flex items-center gap-3 mb-4">
-
-        <div class="h-px bg-gray-200 flex-1"></div>
-
-        <span class="text-[10px] font-bold text-gray-500">
-            MAIN VIA KODE
-        </span>
-
-        <div class="h-px bg-gray-200 flex-1"></div>
-
-    </div>
-
-    <button
-        onclick="createNewRoom()"
-        class="w-full bg-white border-2 border-blue-600 text-blue-600 font-bold py-3 rounded-2xl mb-4">
-
-        BUAT ROOM BARU
-
-    </button>
-
-    <div class="flex gap-2">
-
-        <input
-            id="roomInput"
-            placeholder="KODE ROOM"
-            class="flex-1 bg-gray-100 rounded-2xl px-4 py-3 text-center font-bold uppercase outline-none">
-
-        <button
-            onclick="joinRoom()"
-            class="bg-black text-white font-bold px-6 rounded-2xl">
-
-            JOIN
-
-        </button>
-
-    </div>
-
-    <div class="mt-4 flex flex-col items-center gap-2">
-
-        <p
-            id="connectionStatus"
-            class="text-[9px] text-gray-500 font-black uppercase">
-            Server: Menghubungkan...
-        </p>
-
-        <div id="pingIndicator" class="ping-box hidden">
-
-            <div id="pingDot" class="ping-dot ping-good"></div>
-
-            <span id="pingValue">
-                -- ms
-            </span>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<div id="searchingOverlay"
-     class="hidden google-card p-8 mb-6 text-center">
-
-    <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 pulse-searching">
-
-        🔎
-
-    </div>
-
-    <h3 class="text-lg font-black uppercase">
-        Mencari Lawan...
-    </h3>
-
-    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-8">
-        Mohon tunggu sebentar
-    </p>
-
-    <button
-        onclick="cancelMatchmaking()"
-        class="px-8 py-3 rounded-full border text-xs font-bold uppercase">
-
-        BATAL
-
-    </button>
-
-</div>
-
-
-<div id="boardArea"
-     class="relative mb-6">
-
-    <div class="board-container">
-
-        <div id="board"
-             class="grid grid-3 gap-2 relative">
-        </div>
-
-    </div>
-
-    <svg id="winLineOverlay"
-         viewBox="0 0 100 100"
-         preserveAspectRatio="none">
-
-        <line
-            id="winLine"
-            x1="0"
-            x2="0"
-            stroke="white"
-            class="hidden"/>
-
-    </svg>
-
-</div>
-
-
-<div id="statusControlArea"
-     class="mb-8 flex items-center justify-center gap-3">
-
-    <div
-        id="turnStatus"
-        class="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full border shadow-sm">
-
-        <div
-            id="turnPulse"
-            class="w-2 h-2 rounded-full animate-pulse bg-red-600">
-        </div>
-
-        <span
-            id="currentPlayerText"
-            class="text-[11px] font-bold uppercase tracking-widest">
-            PEMAIN X
-        </span>
-
-    </div>
-
-    <button
-        id="muteBtn"
-        onclick="toggleMute()"
-        class="mute-btn">
-
-        🔊
-
-    </button>
-
-    <button
-        onclick="requestReset()"
-        class="bg-black text-white p-3 rounded-full shadow-lg">
-
-        ↻
-
-    </button>
-
-</div>
-
-
-<div class="mt-auto flex justify-center">
-
-    <a
-        href="https://teer.id/fauzidev"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center justify-center gap-2 bg-[#fce8e6] text-[#d93025] font-bold py-2.5 px-5 rounded-full shadow-sm">
-
-        ❤️
-        <span class="text-[10px] uppercase tracking-widest">
-            Support Dev
-        </span>
-
-    </a>
-
-</div>
-
-<div class="watermark mb-4">
-    BY FAUZI DEV
-</div>
-
-</main>
-
-
-<!-- RESULT MODAL -->
-
-<div
-    id="statusModal"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-6">
-
-    <div
-        id="modalContent"
-        class="google-card p-10 w-full max-w-xs text-center scale-90 transition-transform">
-
-        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
-            🏆
-        </div>
-
-        <h2
-            id="winnerText"
-            class="text-2xl font-extrabold mb-2 uppercase">
-            X MENANG!
-        </h2>
-
-        <p
-            id="winnerSubtext"
-            class="text-xs text-gray-500 mb-8">
-            Permainan selesai.
-        </p>
-
-        <button
-            onclick="handlePlayAgain()"
-            class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-xl uppercase tracking-widest">
-
-            MAIN LAGI
-
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- PROFILE -->
-
-<div
-    id="profileModal"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-6">
-
-    <div
-        class="google-card w-full max-w-xs text-center overflow-hidden flex flex-col max-h-[90dvh]">
-
-        <div class="p-6 pb-0">
-
-            <h2 class="text-xl font-black mb-4 uppercase">
-                Profil Saya
-            </h2>
-
-            <div class="profile-tabs">
-
-                <button
-                    id="tabAccount"
-                    onclick="switchProfileTab('account')"
-                    class="profile-tab active">
-                    Akun
+                <!-- Tombol Pengaturan (Gir 3D) -->
+                <button class="btn-header-3d" onclick="openSettingsModal()" title="Pengaturan">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.38-2.65C13.43 2.17 13.2 2 12.95 2h-4c-.25 0-.48.17-.51.42l-.38 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L3.5 10.5c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.06.74 1.69.99l.38 2.65c.03.24.26.42.51.42h4c.25 0 .48-.18.51-.42l.38-2.65c.63-.25 1.17-.59 1.69-.99l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/>
+                    </svg>
                 </button>
 
-                <button
-                    id="tabStats"
-                    onclick="switchProfileTab('stats')"
-                    class="profile-tab">
-                    Statistik
+                <!-- Tombol Restart Game (3D) -->
+                <button class="btn-header-3d" onclick="resetGame()" title="Ulangi Game">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                    </svg>
                 </button>
+            </div>
+        </div>
 
-                <button
-                    id="tabAchievements"
-                    onclick="switchProfileTab('achievements')"
-                    class="profile-tab">
-                    Pencapaian
-                </button>
+        <!-- Banner Informasi Mode Online -->
+        <div id="onlineBadge" class="online-status-badge">
+            ONLINE: ROOM <span id="onlineRoomCode">GLOBAL</span>
+        </div>
 
+        <!-- 2. Papan Permainan -->
+        <div class="board-container">
+            <div class="board" id="board"></div>
+        </div>
+
+        <!-- 3. Area Bawah -->
+        <div class="bottom-section">
+            <div class="turn-box-container">
+                <div class="turn-card">
+                    <span class="turn-text" id="turnText">GILIRAN X</span>
+                </div>
             </div>
 
+            <div class="scoreboard">
+                <div class="score-card x-card">
+                    <span class="score-title" id="titleX">X (YOU)</span>
+                    <span class="score-num" id="scoreX">0</span>
+                </div>
+                <div class="score-card ties-card">
+                    <span class="score-title">SERI</span>
+                    <span class="score-num" id="scoreDraw">0</span>
+                </div>
+                <div class="score-card o-card">
+                    <span class="score-title" id="titleO">O (CPU)</span>
+                    <span class="score-num" id="scoreO">0</span>
+                </div>
+            </div>
         </div>
+    </div>
 
-
-        <div class="flex-1 overflow-y-auto p-6 pt-0">
-
-            <div id="profileAccount">
-
-                <div class="mb-6 text-left">
-
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">
-                        Nama Tampilan
-                    </label>
-
-                    <input
-                        id="profileNameInput"
-                        maxlength="12"
-                        class="w-full bg-gray-100 rounded-2xl px-4 py-3 font-bold outline-none">
-
-                </div>
-
-                <div class="text-left">
-
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-3">
-                        Foto Profil
-                    </label>
-
-                    <div
-                        id="avatarSelector"
-                        class="grid grid-cols-4 gap-3">
-                    </div>
-
-                </div>
-
+    <!-- ===== 4A. MODAL POPUP PENGATURAN ===== -->
+    <div class="modal-overlay" id="settingsModalOverlay" onclick="handleOverlayClick(event, 'settings')">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title">Pengaturan Game</span>
             </div>
 
-
-            <div
-                id="profileStats"
-                class="hidden">
-
-                <div class="grid grid-cols-2 gap-3 mb-4">
-
-                    <div class="stats-item">
-                        <span id="statWin" class="text-xl font-black text-green-600">0</span>
-                        <span class="text-[8px] font-bold text-gray-400">MENANG</span>
-                    </div>
-
-                    <div class="stats-item">
-                        <span id="statLoss" class="text-xl font-black text-red-600">0</span>
-                        <span class="text-[8px] font-bold text-gray-400">KALAH</span>
-                    </div>
-
-                    <div class="stats-item">
-                        <span id="statDraw" class="text-xl font-black">0</span>
-                        <span class="text-[8px] font-bold text-gray-400">SERI</span>
-                    </div>
-
-                    <div class="stats-item">
-                        <span id="statPlayed" class="text-xl font-black text-blue-600">0</span>
-                        <span class="text-[8px] font-bold text-gray-400">MAIN</span>
-                    </div>
-
-                </div>
-
-                <div class="bg-blue-50 p-4 rounded-2xl text-left">
-
-                    <div class="flex justify-between mb-1">
-
-                        <span class="text-[9px] font-bold text-blue-700">
-                            WIN RATE
-                        </span>
-
-                        <span id="winRateVal"
-                              class="text-[9px] font-black text-blue-800">
-                            0%
-                        </span>
-
-                    </div>
-
-                    <div class="w-full bg-blue-200 h-2 rounded-full overflow-hidden">
-
-                        <div
-                            id="winRateBar"
-                            class="bg-blue-600 h-full"
-                            style="width:0%">
-                        </div>
-
-                    </div>
-
-                </div>
-
+            <!-- Nama Pemain -->
+            <div class="setting-section username-input-box">
+                <span class="setting-label">Nama Kamu</span>
+                <input type="text" id="inputUsername" class="room-input" style="text-align:left; font-size:0.8rem; letter-spacing:0;" placeholder="Player123" maxlength="12">
             </div>
 
-
-            <div
-                id="profileAchievements"
-                class="hidden">
-
-                <div id="achievementsList"></div>
-
+            <!-- 1. Pilihan Grid -->
+            <div class="setting-section">
+                <span class="setting-label">Ukuran Papan</span>
+                <div class="option-group" id="gridGroup">
+                    <button class="option-btn active" onclick="setGrid(3)">3 x 3</button>
+                    <button class="option-btn" onclick="setGrid(4)">4 x 4</button>
+                    <button class="option-btn" onclick="setGrid(5)">5 x 5</button>
+                </div>
             </div>
 
+            <!-- 2. Pilihan Mode Lawan -->
+            <div class="setting-section">
+                <span class="setting-label">Mode Permainan</span>
+                <div class="option-group" id="modeGroup">
+                    <button class="option-btn active" onclick="setMode('ai')">VS AI</button>
+                    <button class="option-btn" onclick="setMode('pvp')">2 Pemain</button>
+                    <button class="option-btn" onclick="setMode('global')">Cari Global</button>
+                    <button class="option-btn" onclick="setMode('room')">Room Kode</button>
+                </div>
+            </div>
+
+            <!-- Input Kode Room Online -->
+            <div class="setting-section hidden" id="roomSection">
+                <span class="setting-label">Kode Room Jarak Jauh</span>
+                <div class="room-input-box">
+                    <input type="text" id="inputRoomCode" class="room-input" placeholder="KODE" maxlength="6">
+                    <button class="btn-room-action" onclick="joinOrCreateRoom()">Masuk</button>
+                </div>
+            </div>
+
+            <!-- 3. Pilihan Kesulitan AI -->
+            <div class="setting-section" id="difficultySection">
+                <span class="setting-label">Tingkat Kesulitan AI</span>
+                <div class="option-group" id="difficultyGroup">
+                    <button class="option-btn" onclick="setDifficulty('easy')">Mudah</button>
+                    <button class="option-btn active" onclick="setDifficulty('medium')">Sedang</button>
+                    <button class="option-btn" onclick="setDifficulty('hard')">Sulit</button>
+                </div>
+            </div>
+
+            <button class="btn-save" style="width:100%; margin-top:8px;" onclick="applySettingsAndClose()">Simpan & Mainkan</button>
         </div>
-
-
-        <div class="p-6 pt-0 flex flex-col gap-3">
-
-            <button
-                onclick="saveProfile()"
-                class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl text-xs uppercase">
-
-                SIMPAN PERUBAHAN
-
-            </button>
-
-            <button
-                onclick="closeProfileModal()"
-                class="w-full bg-white border text-gray-500 font-bold py-4 rounded-2xl text-xs uppercase">
-
-                BATAL
-
-            </button>
-
-        </div>
-
     </div>
 
-</div>
+    <!-- ===== 4B. MODAL POPUP PAPAN PERINGKAT ===== -->
+    <div class="modal-overlay" id="leaderboardModalOverlay" onclick="handleOverlayClick(event, 'leaderboard')">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title">Peringkat Global Online</span>
+            </div>
 
+            <div class="leaderboard-list" id="leaderboardList">
+                <div style="text-align:center; font-size:0.8rem; color:var(--text-sub); padding:16px;">Memuat Peringkat...</div>
+            </div>
 
-<!-- LEADERBOARD -->
-
-<div
-    id="leaderboardModal"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-
-    <div
-        class="google-card p-6 w-full max-w-sm flex flex-col max-h-[80dvh]">
-
-        <div class="flex items-center justify-between mb-6">
-
-            <h2 class="text-xl font-extrabold uppercase">
-                🏆 Papan Peringkat
-            </h2>
-
-            <button onclick="closeLeaderboard()">
-                ✕
-            </button>
-
+            <button class="btn-save" style="width:100%; margin-top:8px;" onclick="closeLeaderboardModal()">Tutup</button>
         </div>
-
-        <div
-            id="leaderboardList"
-            class="flex-1 overflow-y-auto">
-        </div>
-
-        <p class="text-[9px] text-gray-400 text-center mt-4">
-            Hanya kemenangan Online yang dihitung
-        </p>
-
     </div>
 
-</div>
-
-
-<!-- ALERT -->
-
-<div
-    id="alertModal"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-[70] p-6">
-
-    <div class="google-card p-8 w-full max-w-xs text-center">
-
-        <div class="text-4xl mb-5">
-            ⚠️
-        </div>
-
-        <h2
-            id="alertTitle"
-            class="text-lg font-extrabold mb-2 uppercase">
-            INFO
-        </h2>
-
-        <p
-            id="alertMessage"
-            class="text-xs text-gray-500 mb-8">
-        </p>
-
-        <button
-            onclick="closeAlertModal()"
-            class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl text-xs">
-
-            MENGERTI
-
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- RESET -->
-
-<div
-    id="resetConfirmModal"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-6">
-
-    <div class="google-card p-8 w-full max-w-xs text-center">
-
-        <div class="text-4xl mb-5">
-            ⚠️
-        </div>
-
-        <h2 class="text-xl font-extrabold mb-2 uppercase">
-            ULANGI GAME?
-        </h2>
-
-        <p class="text-xs text-gray-500 mb-8">
-            Papan akan dikosongkan.
-        </p>
-
-        <div class="flex flex-col gap-3">
-
-            <button
-                onclick="confirmReset()"
-                class="w-full bg-red-600 text-white font-bold py-4 rounded-2xl text-xs">
-
-                YA, ULANGI
-
-            </button>
-
-            <button
-                onclick="closeResetModal()"
-                class="w-full bg-white border text-gray-500 font-bold py-4 rounded-2xl text-xs">
-
-                BATAL
-
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- ADMIN -->
-
-<div
-    id="adminPanelModal"
-    class="fixed inset-0 bg-black/60 backdrop-blur-md hidden items-center justify-center z-[80] p-4">
-
-    <div class="google-card p-6 w-full max-w-sm flex flex-col max-h-[85dvh]">
-
-        <div class="flex items-center justify-between mb-6">
-
-            <h2 class="text-xl font-black uppercase">
-                🛡️ Admin
-            </h2>
-
-            <button onclick="closeAdminPanel()">
-                ✕
-            </button>
-
-        </div>
-
-        <div
-            id="adminPlayerList"
-            class="flex-1 overflow-y-auto">
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- CHAT -->
-
-<div id="chatPanel">
-
-    <div class="flex items-center justify-between p-5 border-b">
-
-        <span class="font-bold text-sm uppercase">
-            Obrolan Room
-        </span>
-
-        <button onclick="toggleChat()">
-            ✕
-        </button>
-
-    </div>
-
-    <div
-        id="chatMessages"
-        class="flex-1 overflow-y-auto p-5 flex flex-col bg-[#fafafa]">
-    </div>
-
-    <div class="p-4 border-t flex gap-2">
-
-        <input
-            id="chatInput"
-            placeholder="Ketik pesan..."
-            class="flex-1 bg-gray-100 rounded-2xl px-4 py-3 text-sm outline-none">
-
-        <button
-            onclick="sendChatMessage()"
-            class="bg-blue-600 text-white p-3 rounded-full">
-
-            ➤
-
-        </button>
-
-    </div>
-
-</div>
-
-
-<div
-    id="toast"
-    class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-black text-white px-6 py-2.5 rounded-full font-bold opacity-0 pointer-events-none z-[100] text-[10px]">
-
-    BERHASIL
-
-</div>
-
-</div>
-
-
-<script type="module">
-
-import {
-    initializeApp
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-
-import {
-    getAuth,
-    signInAnonymously,
-    onAuthStateChanged,
-    signInWithCustomToken
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc,
-    updateDoc,
-    deleteDoc,
-    collection,
-    addDoc,
-    increment,
-    query,
-    where,
-    getDocs,
-    limit,
-    onSnapshot
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-
-/* =========================================================
-   FIREBASE
-========================================================= */
-
-const firebaseConfig = {
-    apiKey:"AIzaSyAiknTiGhLeeZREUy5CJQ6Gq8O0FSXWYh8",
-    authDomain:"tictactoe-ultra.firebaseapp.com",
-    projectId:"tictactoe-ultra",
-    storageBucket:"tictactoe-ultra.firebasestorage.app",
-    messagingSenderId:"110161757179",
-    appId:"1:110161757179:web:b3aaf10a123a77728d815e"
-};
-
-const app =
-    initializeApp(firebaseConfig);
-
-const auth =
-    getAuth(app);
-
-const db =
-    getFirestore(app);
-
-
-/* =========================================================
-   ADMIN SECURITY
-========================================================= */
-
-/*
-   GANTI dengan UID Firebase akun admin kamu.
-
-   JANGAN memakai:
-   if(name === "FAUZIDEV")
-
-   karena siapapun bisa memakai nama tersebut.
-*/
-
-const ADMIN_UID = "ISI_UID_ADMIN_DI_SINI";
-
-
-/* =========================================================
-   APP ID
-========================================================= */
-
-const appId =
-    typeof __app_id !== "undefined"
-        ? __app_id
-        : "tictactoe-pro-v6-fixed";
-
-
-/* =========================================================
-   STATE
-========================================================= */
-
-let userId = null;
-
-let gridSize = 3;
-
-let board =
-    Array(9).fill("");
-
-let currentPlayer = "X";
-
-let gameActive = true;
-
-let gameMode = "pvp";
-
-let aiDifficulty = "easy";
-
-let scores = {
-    X:0,
-    O:0,
-    draw:0
-};
-
-let currentRoomId = null;
-
-let mySymbol = null;
-
-let unsubscribeRoom = null;
-
-let unsubscribeChat = null;
-
-let unsubscribeLeaderboard = null;
-
-let unsubscribeAdmin = null;
-
-let onlineRoundId = null;
-
-let onlineResultProcessed = false;
-
-let matchmakingRoom = null;
-
-
-/* =========================================================
-   PROFILE
-========================================================= */
-
-let userProfile = {
-    name:"Pemain",
-    avatar:null,
-    totalWins:0,
-    totalLosses:0,
-    totalDraws:0,
-    totalPlayed:0,
-    unlockedAchievements:[]
-};
-
-let selectedAvatarUrl = null;
-
-
-/* =========================================================
-   AVATAR
-========================================================= */
-
-const avatarOptions = [
-
-    null,
-
-    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&h=120&fit=crop",
-
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&h=120&fit=crop",
-
-    "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=120&h=120&fit=crop",
-
-    "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&h=120&fit=crop",
-
-    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=120&h=120&fit=crop",
-
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop",
-
-    "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop",
-
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop"
-
-];
-
-
-/* =========================================================
-   DOM
-========================================================= */
-
-const boardElement =
-    document.getElementById("board");
-
-const scoreXElement =
-    document.getElementById("scoreX");
-
-const scoreOElement =
-    document.getElementById("scoreO");
-
-const scoreDrawElement =
-    document.getElementById("scoreDraw");
-
-const currentPlayerText =
-    document.getElementById("currentPlayerText");
-
-const winLine =
-    document.getElementById("winLine");
-
-
-/* =========================================================
-   AUDIO
-========================================================= */
-
-let audioCtx = null;
-
-let isMuted = false;
-
-function initAudio(){
-
-    if(!audioCtx){
-
-        audioCtx =
-            new (window.AudioContext ||
-            window.webkitAudioContext)();
-
-    }
-
-    if(audioCtx.state === "suspended"){
-        audioCtx.resume();
-    }
-
-}
-
-function playSFX(type){
-
-    if(isMuted || !audioCtx) return;
-
-    const osc =
-        audioCtx.createOscillator();
-
-    const gain =
-        audioCtx.createGain();
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    const now =
-        audioCtx.currentTime;
-
-    if(type === "click"){
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(400,now);
-
-        gain.gain.setValueAtTime(.15,now);
-
-        osc.start();
-        osc.stop(now+.08);
-
-    }
-
-    if(type === "win"){
-
-        osc.type = "triangle";
-
-        osc.frequency.setValueAtTime(523,now);
-        osc.frequency.setValueAtTime(659,now+.1);
-        osc.frequency.setValueAtTime(783,now+.2);
-
-        gain.gain.setValueAtTime(.2,now);
-
-        osc.start();
-        osc.stop(now+.4);
-
-    }
-
-    if(type === "draw"){
-
-        osc.type = "sine";
-
-        osc.frequency.setValueAtTime(200,now);
-
-        gain.gain.setValueAtTime(.15,now);
-
-        osc.start();
-        osc.stop(now+.3);
-
-    }
-
-}
-
-window.toggleMute = function(){
-
-    isMuted = !isMuted;
-
-    const btn =
-        document.getElementById("muteBtn");
-
-    btn.innerText =
-        isMuted ? "🔇" : "🔊";
-
-    if(!isMuted){
-        initAudio();
-    }
-
-};
-
-
-/* =========================================================
-   AUTH
-========================================================= */
-
-async function initAuth(){
-
-    try{
-
-        if(
-            typeof __initial_auth_token !== "undefined" &&
-            __initial_auth_token
-        ){
-
-            await signInWithCustomToken(
-                auth,
-                __initial_auth_token
-            );
-
-        }else{
-
-            await signInAnonymously(auth);
-
+    <script>
+        // Audio Synthesizer
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
-    }catch(error){
-
-        console.error(error);
-
-        showAlert(
-            "Firebase Error",
-            "Gagal menghubungkan akun Firebase."
-        );
-
-    }
-
-}
-
-
-onAuthStateChanged(
-    auth,
-    async user => {
-
-        if(!user) return;
-
-        userId =
-            user.uid;
-
-        document.getElementById(
-            "connectionStatus"
-        ).innerText =
-            "Server: Online";
-
-        await loadUserProfile();
-
-        checkAdminAccess();
-
-        startPingMonitor();
-
-    }
-);
-
-initAuth();
-
-
-/* =========================================================
-   PROFILE
-========================================================= */
-
-async function loadUserProfile(){
-
-    if(!userId) return;
-
-    const ref =
-        doc(
-            db,
-            "artifacts",
-            appId,
-            "users",
-            userId,
-            "profile",
-            "data"
-        );
-
-    const snap =
-        await getDoc(ref);
-
-    if(snap.exists()){
-
-        userProfile = {
-            ...userProfile,
-            ...snap.data()
-        };
-
-    }else{
-
-        userProfile = {
-
-            name:
-                "Player" +
-                Math.floor(
-                    1000 +
-                    Math.random()*9000
-                ),
-
-            avatar:null,
-
-            totalWins:0,
-            totalLosses:0,
-            totalDraws:0,
-            totalPlayed:0,
-
-            unlockedAchievements:[]
-
-        };
-
-        await setDoc(
-            ref,
-            userProfile
-        );
-
-    }
-
-    selectedAvatarUrl =
-        userProfile.avatar;
-
-    updateProfileUI();
-
-    await updateLeaderboardEntry();
-
-}
-
-
-function checkAdminAccess(){
-
-    const btn =
-        document.getElementById(
-            "adminTrigger"
-        );
-
-    if(
-        ADMIN_UID &&
-        ADMIN_UID !== "ISI_UID_ADMIN_DI_SINI" &&
-        userId === ADMIN_UID
-    ){
-
-        btn.classList.remove("hidden");
-        btn.classList.add("flex");
-
-    }else{
-
-        btn.classList.add("hidden");
-        btn.classList.remove("flex");
-
-    }
-
-}
-
-
-function updateProfileUI(){
-
-    const img =
-        document.getElementById(
-            "headerAvatar"
-        );
-
-    const fallback =
-        document.getElementById(
-            "headerAvatarFallback"
-        );
-
-    if(userProfile.avatar){
-
-        img.src =
-            userProfile.avatar;
-
-        img.classList.remove("hidden");
-
-        fallback.classList.add("hidden");
-
-    }else{
-
-        img.classList.add("hidden");
-
-        fallback.classList.remove("hidden");
-
-    }
-
-    document.getElementById(
-        "profileNameInput"
-    ).value =
-        userProfile.name;
-
-    if(gameMode !== "online"){
-
-        document.getElementById(
-            "labelX"
-        ).innerText =
-            userProfile.name;
-
-        updateAvatarDisplay(
-            "X",
-            userProfile.avatar
-        );
-
-        if(gameMode === "pve"){
-
-            document.getElementById(
-                "labelO"
-            ).innerText =
-                "BOT AI";
-
-            updateAvatarDisplay(
-                "O",
-                "https://ui-avatars.com/api/?name=BOT&background=000&color=fff"
-            );
-
-        }else{
-
-            document.getElementById(
-                "labelO"
-            ).innerText =
-                "TEMAN";
-
-            updateAvatarDisplay(
-                "O",
-                null
-            );
-
-        }
-
-    }
-
-}
-
-
-function updateAvatarDisplay(side,url){
-
-    const img =
-        document.getElementById(
-            "avatar"+side
-        );
-
-    const fallback =
-        document.getElementById(
-            "fallback"+side
-        );
-
-    if(url){
-
-        img.src = url;
-        img.classList.remove("hidden");
-
-        if(fallback)
-            fallback.classList.add("hidden");
-
-    }else{
-
-        img.classList.add("hidden");
-
-        if(fallback)
-            fallback.classList.remove("hidden");
-
-    }
-
-}
-
-
-function renderAvatarOptions(){
-
-    const container =
-        document.getElementById(
-            "avatarSelector"
-        );
-
-    container.innerHTML = "";
-
-    avatarOptions.forEach(url => {
-
-        const item =
-            document.createElement("div");
-
-        item.className =
-            "avatar-option " +
-            (
-                selectedAvatarUrl === url
-                    ? "selected"
-                    : ""
-            );
-
-        if(url){
-
-            item.innerHTML =
-                `<img src="${url}" class="avatar-img">`;
-
-        }else{
-
-            item.innerHTML =
-                "👤";
-
-        }
-
-        item.onclick = () => {
-
-            selectedAvatarUrl =
-                url;
-
-            renderAvatarOptions();
-
-        };
-
-        container.appendChild(item);
-
-    });
-
-}
-
-
-window.openProfileModal = function(){
-
-    initAudio();
-    playSFX("click");
-
-    document.getElementById(
-        "profileModal"
-    ).classList.replace(
-        "hidden",
-        "flex"
-    );
-
-    renderAvatarOptions();
-
-    switchProfileTab("account");
-
-};
-
-
-window.closeProfileModal = function(){
-
-    document.getElementById(
-        "profileModal"
-    ).classList.replace(
-        "flex",
-        "hidden"
-    );
-
-};
-
-
-window.saveProfile = async function(){
-
-    if(!userId) return;
-
-    const input =
-        document.getElementById(
-            "profileNameInput"
-        );
-
-    const newName =
-        input.value.trim() ||
-        "Pemain";
-
-    if(newName.length < 2){
-
-        showAlert(
-            "Nama Tidak Valid",
-            "Nama minimal 2 karakter."
-        );
-
-        return;
-
-    }
-
-    const oldName =
-        userProfile.name;
-
-    const nameKey =
-        newName.toLowerCase();
-
-    const usernameRef =
-        doc(
-            db,
-            "artifacts",
-            appId,
-            "public",
-            "data",
-            "usernames",
-            nameKey
-        );
-
-    const snap =
-        await getDoc(usernameRef);
-
-    if(
-        snap.exists() &&
-        snap.data().uid !== userId
-    ){
-
-        showAlert(
-            "Nama Dipakai",
-            "Nama tersebut sudah digunakan."
-        );
-
-        return;
-
-    }
-
-
-    /* LEPAS USERNAME LAMA */
-
-    if(
-        oldName &&
-        oldName.toLowerCase() !== nameKey
-    ){
-
-        try{
-
-            await deleteDoc(
-                doc(
-                    db,
-                    "artifacts",
-                    appId,
-                    "public",
-                    "data",
-                    "usernames",
-                    oldName.toLowerCase()
-                )
-            );
-
-        }catch(e){
-
-            console.warn(
-                "Gagal menghapus username lama",
-                e
-            );
-
-        }
-
-    }
-
-
-    await setDoc(
-        usernameRef,
-        {uid:userId}
-    );
-
-
-    userProfile.name =
-        newName;
-
-    userProfile.avatar =
-        selectedAvatarUrl;
-
-
-    await setDoc(
-        doc(
-            db,
-            "artifacts",
-            appId,
-            "users",
-            userId,
-            "profile",
-            "data"
-        ),
-        userProfile
-    );
-
-
-    if(currentRoomId && mySymbol){
-
-        try{
-
-            await updateDoc(
-                doc(
-                    db,
-                    "artifacts",
-                    appId,
-                    "public",
-                    "data",
-                    "rooms",
-                    currentRoomId
-                ),
-                {
-                    [`playerData.${mySymbol}`]:{
-                        name:newName,
-                        avatar:selectedAvatarUrl
-                    }
+        function playSound(type) {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'x') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'o') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, now);
+                    osc.frequency.exponentialRampToValueAtTime(293.66, now + 0.08);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'win') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, i) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.frequency.setValueAtTime(freq, now + i * 0.07);
+                        noteGain.gain.setValueAtTime(0.08, now + i * 0.07);
+                        noteGain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.12);
+                        noteOsc.start(now + i * 0.07);
+                        noteOsc.stop(now + i * 0.07 + 0.12);
+                    });
+                } else if (type === 'draw') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.linearRampToValueAtTime(200, now + 0.18);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+                    osc.start(now);
+                    osc.stop(now + 0.18);
                 }
-            );
-
-        }catch(e){
-
-            console.warn(e);
-
+            } catch (e) {}
         }
 
-    }
-
-
-    updateProfileUI();
-
-    await updateLeaderboardEntry();
-
-    checkAdminAccess();
-
-    closeProfileModal();
-
-};
-
-
-/* =========================================================
-   PROFILE TABS
-========================================================= */
-
-window.switchProfileTab =
-function(tab){
-
-    const sections = [
-        "profileAccount",
-        "profileStats",
-        "profileAchievements"
-    ];
-
-    const buttons = [
-        "tabAccount",
-        "tabStats",
-        "tabAchievements"
-    ];
-
-    sections.forEach(id => {
-
-        document
-            .getElementById(id)
-            .classList.add("hidden");
-
-    });
-
-    buttons.forEach(id => {
-
-        document
-            .getElementById(id)
-            .classList.remove("active");
-
-    });
-
-
-    if(tab === "account"){
-
-        document
-            .getElementById("profileAccount")
-            .classList.remove("hidden");
-
-        document
-            .getElementById("tabAccount")
-            .classList.add("active");
-
-    }
-
-    if(tab === "stats"){
-
-        document
-            .getElementById("profileStats")
-            .classList.remove("hidden");
-
-        document
-            .getElementById("tabStats")
-            .classList.add("active");
-
-        updateStats();
-
-    }
-
-    if(tab === "achievements"){
-
-        document
-            .getElementById("profileAchievements")
-            .classList.remove("hidden");
-
-        document
-            .getElementById("tabAchievements")
-            .classList.add("active");
-
-        renderAchievements();
-
-    }
-
-};
-
-
-function updateStats(){
-
-    const wins =
-        userProfile.totalWins || 0;
-
-    const losses =
-        userProfile.totalLosses || 0;
-
-    const draws =
-        userProfile.totalDraws || 0;
-
-    const played =
-        userProfile.totalPlayed || 0;
-
-    const rate =
-        played > 0
-            ? Math.round(
-                wins / played * 100
-            )
-            : 0;
-
-    document.getElementById(
-        "statWin"
-    ).innerText = wins;
-
-    document.getElementById(
-        "statLoss"
-    ).innerText = losses;
-
-    document.getElementById(
-        "statDraw"
-    ).innerText = draws;
-
-    document.getElementById(
-        "statPlayed"
-    ).innerText = played;
-
-    document.getElementById(
-        "winRateVal"
-    ).innerText =
-        rate+"%";
-
-    document.getElementById(
-        "winRateBar"
-    ).style.width =
-        rate+"%";
-
-}
-
-
-/* =========================================================
-   ACHIEVEMENTS
-========================================================= */
-
-const ACHIEVEMENTS = [
-
-    {
-        id:"first_win",
-        title:"Pemenang Pertama",
-        desc:"Menangkan 1 game Online",
-        goal:1,
-        type:"totalWins",
-        icon:"🏆"
-    },
-
-    {
-        id:"pakar_ttc",
-        title:"Pakar Tic Tac Toe",
-        desc:"Menangkan 10 game Online",
-        goal:10,
-        type:"totalWins",
-        icon:"🥇"
-    },
-
-    {
-        id:"legend_hidup",
-        title:"Legenda Hidup",
-        desc:"Menangkan 50 game Online",
-        goal:50,
-        type:"totalWins",
-        icon:"👑"
-    },
-
-    {
-        id:"penjaga_seri",
-        title:"Sang Penjaga",
-        desc:"Dapatkan 10 hasil seri",
-        goal:10,
-        type:"totalDraws",
-        icon:"🛡️"
-    },
-
-    {
-        id:"pemain_aktif",
-        title:"Pemain Aktif",
-        desc:"Mainkan 100 ronde",
-        goal:100,
-        type:"totalPlayed",
-        icon:"⚡"
-    }
-
-];
-
-
-function renderAchievements(){
-
-    const container =
-        document.getElementById(
-            "achievementsList"
-        );
-
-    container.innerHTML = "";
-
-    ACHIEVEMENTS.forEach(ach => {
-
-        const unlocked =
-            userProfile
-                .unlockedAchievements
-                ?.includes(ach.id);
-
-        const progress =
-            userProfile[ach.type] || 0;
-
-        const percent =
-            Math.min(
-                100,
-                Math.round(
-                    progress /
-                    ach.goal *
-                    100
-                )
-            );
-
-        const card =
-            document.createElement("div");
-
-        card.className =
-            "achievement-card " +
-            (unlocked ? "unlocked" : "");
-
-        card.innerHTML = `
-
-            <div class="achievement-badge">
-                ${ach.icon}
-            </div>
-
-            <div class="flex-1 text-left">
-
-                <div class="flex justify-between">
-
-                    <span class="text-[11px] font-black uppercase">
-                        ${ach.title}
-                    </span>
-
-                    <span class="text-[8px] font-bold text-gray-400">
-                        ${unlocked ? "DONE" : progress+"/"+ach.goal}
-                    </span>
-
-                </div>
-
-                <p class="text-[8px] text-gray-400 mb-2">
-                    ${ach.desc}
-                </p>
-
-                ${
-                    !unlocked
-                    ?
-                    `
-                    <div class="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
-
-                        <div
-                            class="bg-blue-500 h-full"
-                            style="width:${percent}%">
-                        </div>
-
-                    </div>
-                    `
-                    :
-                    ""
-                }
-
-            </div>
-
+        // Simbol SVG X dan O
+        const svgX = `
+            <svg class="icon" viewBox="0 0 40 40">
+                <path d="M 8,8 L 32,32 M 32,8 L 8,32" stroke="#4285F4" stroke-width="7" stroke-linecap="round" />
+            </svg>
         `;
 
-        container.appendChild(card);
+        const svgO = `
+            <svg class="icon" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="12" stroke="#FBBC05" stroke-width="7" fill="none" />
+            </svg>
+        `;
 
-    });
+        // Modals Controls Terpisah
+        const settingsModalOverlay = document.getElementById('settingsModalOverlay');
+        const leaderboardModalOverlay = document.getElementById('leaderboardModalOverlay');
 
-}
-
-
-/* =========================================================
-   STATS DATABASE
-========================================================= */
-
-async function incrementGlobalStat(type){
-
-    if(!userId) return;
-
-    /*
-       BUG LAMA:
-       userProfile berubah dulu lalu updateDoc.
-       Jika listener/game result dipanggil dua kali,
-       statistik bisa dobel.
-
-       Sekarang pemanggil online memakai
-       onlineResultProcessed sebagai guard.
-    */
-
-    const ref =
-        doc(
-            db,
-            "artifacts",
-            appId,
-            "users",
-            userId,
-            "profile",
-            "data"
-        );
-
-    const updates = {
-        totalPlayed:increment(1)
-    };
-
-    userProfile.totalPlayed =
-        (userProfile.totalPlayed || 0) + 1;
-
-
-    if(type === "win"){
-
-        updates.totalWins =
-            increment(1);
-
-        userProfile.totalWins =
-            (userProfile.totalWins || 0) + 1;
-
-    }
-
-    if(type === "loss"){
-
-        updates.totalLosses =
-            increment(1);
-
-        userProfile.totalLosses =
-            (userProfile.totalLosses || 0) + 1;
-
-    }
-
-    if(type === "draw"){
-
-        updates.totalDraws =
-            increment(1);
-
-        userProfile.totalDraws =
-            (userProfile.totalDraws || 0) + 1;
-
-    }
-
-
-    await updateDoc(
-        ref,
-        updates
-    );
-
-
-    if(type === "win"){
-
-        await updateDoc(
-            doc(
-                db,
-                "artifacts",
-                appId,
-                "public",
-                "data",
-                "leaderboard",
-                userId
-            ),
-            {
-                totalWins:increment(1)
-            }
-        );
-
-    }
-
-
-    await checkAchievements();
-
-    updateProfileUI();
-
-}
-
-
-async function checkAchievements(){
-
-    if(!userId) return;
-
-    const unlocked =
-        userProfile
-            .unlockedAchievements || [];
-
-    const newUnlocks = [];
-
-    ACHIEVEMENTS.forEach(ach => {
-
-        if(unlocked.includes(ach.id))
-            return;
-
-        const value =
-            userProfile[ach.type] || 0;
-
-        if(value >= ach.goal){
-
-            newUnlocks.push(
-                ach.id
-            );
-
+        function openSettingsModal() {
+            settingsModalOverlay.classList.add('active');
         }
 
-    });
-
-
-    if(newUnlocks.length){
-
-        userProfile.unlockedAchievements =
-            [
-                ...unlocked,
-                ...newUnlocks
-            ];
-
-        await updateDoc(
-            doc(
-                db,
-                "artifacts",
-                appId,
-                "users",
-                userId,
-                "profile",
-                "data"
-            ),
-            {
-                unlockedAchievements:
-                    userProfile.unlockedAchievements
-            }
-        );
-
-
-        showToast(
-            "🏆 "+newUnlocks.length+
-            " PENCAPAIAN TERBUKA!"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   LEADERBOARD
-========================================================= */
-
-async function updateLeaderboardEntry(){
-
-    if(!userId) return;
-
-    await setDoc(
-        doc(
-            db,
-            "artifacts",
-            appId,
-            "public",
-            "data",
-            "leaderboard",
-            userId
-        ),
-        {
-            name:userProfile.name,
-            avatar:userProfile.avatar,
-            totalWins:userProfile.totalWins || 0
-        },
-        {
-            merge:true
+        function closeSettingsModal() {
+            settingsModalOverlay.classList.remove('active');
         }
-    );
 
-}
+        function openLeaderboardModal() {
+            leaderboardModalOverlay.classList.add('active');
+            fetchLeaderboard();
+        }
 
+        function closeLeaderboardModal() {
+            leaderboardModalOverlay.classList.remove('active');
+        }
 
-window.openLeaderboard =
-function(){
+        function handleOverlayClick(e, modalType) {
+            if (modalType === 'settings' && e.target === settingsModalOverlay) {
+                closeSettingsModal();
+            } else if (modalType === 'leaderboard' && e.target === leaderboardModalOverlay) {
+                closeLeaderboardModal();
+            }
+        }
 
-    document
-        .getElementById("leaderboardModal")
-        .classList.replace(
-            "hidden",
-            "flex"
-        );
+        function applySettingsAndClose() {
+            saveUsername();
+            closeSettingsModal();
+            if (gameMode === 'global') {
+                findGlobalMatch();
+            } else if (gameMode !== 'room') {
+                leaveOnlineRoom();
+                resetGame();
+            }
+        }
 
+        // Configurations & State
+        let gridSize = 3;
+        let winCondition = 3;
+        let gameMode = 'ai';
+        let aiDifficulty = 'medium';
 
-    if(unsubscribeLeaderboard)
-        unsubscribeLeaderboard();
+        let boardState = [];
+        let currentPlayer = 'X';
+        let gameActive = true;
+        let winningCombinations = [];
+        let scores = { X: 0, O: 0, draw: 0 };
 
+        // Firebase State
+        let db = null;
+        let auth = null;
+        let user = null;
+        let currentRoomId = null;
+        let myRole = 'X';
+        let roomUnsubscribe = null;
+        let username = 'Pemain_' + Math.floor(100 + Math.random() * 900);
 
-    unsubscribeLeaderboard =
-        onSnapshot(
-            collection(
-                db,
-                "artifacts",
-                appId,
-                "public",
-                "data",
-                "leaderboard"
-            ),
-            snap => {
+        // DOM Handles
+        const boardEl = document.getElementById('board');
+        const turnText = document.getElementById('turnText');
+        const scoreXEl = document.getElementById('scoreX');
+        const scoreOEl = document.getElementById('scoreO');
+        const scoreDrawEl = document.getElementById('scoreDraw');
+        const titleX = document.getElementById('titleX');
+        const titleO = document.getElementById('titleO');
+        const difficultySection = document.getElementById('difficultySection');
+        const roomSection = document.getElementById('roomSection');
+        const onlineBadge = document.getElementById('onlineBadge');
+        const onlineRoomCode = document.getElementById('onlineRoomCode');
+        const inputUsername = document.getElementById('inputUsername');
+        const leaderboardList = document.getElementById('leaderboardList');
 
-                const players = [];
+        // Init Firebase
+        window.addEventListener('DOMContentLoaded', async () => {
+            inputUsername.value = username;
 
-                snap.forEach(d => {
+            if (window.FirebaseModule && typeof __firebase_config !== 'undefined') {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = window.FirebaseModule.initializeApp(firebaseConfig);
+                auth = window.FirebaseModule.getAuth(app);
+                db = window.FirebaseModule.getFirestore(app);
 
-                    players.push({
-                        id:d.id,
-                        ...d.data()
-                    });
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await window.FirebaseModule.signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await window.FirebaseModule.signInAnonymously(auth);
+                }
 
+                window.FirebaseModule.onAuthStateChanged(auth, (u) => {
+                    user = u;
+                });
+            }
+        });
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        function saveUsername() {
+            const val = inputUsername.value.trim();
+            if (val) username = val;
+        }
+
+        // Selection Handlers
+        function setGrid(size) {
+            gridSize = size;
+            winCondition = size === 3 ? 3 : 4;
+            updateToggleUI('#gridGroup', event.target);
+            generateWinningCombinations();
+        }
+
+        function setMode(mode) {
+            gameMode = mode;
+            updateToggleUI('#modeGroup', event.target);
+
+            if (mode === 'ai') {
+                difficultySection.classList.remove('hidden');
+                roomSection.classList.add('hidden');
+                titleX.innerText = 'X (YOU)';
+                titleO.innerText = 'O (CPU)';
+            } else if (mode === 'pvp') {
+                difficultySection.classList.add('hidden');
+                roomSection.classList.add('hidden');
+                titleX.innerText = 'PEMAIN X';
+                titleO.innerText = 'PEMAIN O';
+            } else if (mode === 'global') {
+                difficultySection.classList.add('hidden');
+                roomSection.classList.add('hidden');
+            } else if (mode === 'room') {
+                difficultySection.classList.add('hidden');
+                roomSection.classList.remove('hidden');
+            }
+
+            resetScore();
+        }
+
+        function setDifficulty(diff) {
+            aiDifficulty = diff;
+            updateToggleUI('#difficultyGroup', event.target);
+        }
+
+        function updateToggleUI(groupId, activeBtn) {
+            const buttons = document.querySelectorAll(`${groupId} .option-btn`);
+            buttons.forEach(btn => btn.classList.remove('active'));
+            activeBtn.classList.add('active');
+        }
+
+        function generateWinningCombinations() {
+            winningCombinations = [];
+            const N = gridSize;
+            const K = winCondition;
+
+            for (let r = 0; r < N; r++) {
+                for (let c = 0; c <= N - K; c++) {
+                    let combo = [];
+                    for (let k = 0; k < K; k++) combo.push(r * N + (c + k));
+                    winningCombinations.push(combo);
+                }
+            }
+
+            for (let c = 0; c < N; c++) {
+                for (let r = 0; r <= N - K; r++) {
+                    let combo = [];
+                    for (let k = 0; k < K; k++) combo.push((r + k) * N + c);
+                    winningCombinations.push(combo);
+                }
+            }
+
+            for (let r = 0; r <= N - K; r++) {
+                for (let c = 0; c <= N - K; c++) {
+                    let combo = [];
+                    for (let k = 0; k < K; k++) combo.push((r + k) * N + (c + k));
+                    winningCombinations.push(combo);
+                }
+            }
+
+            for (let r = 0; r <= N - K; r++) {
+                for (let c = K - 1; c < N; c++) {
+                    let combo = [];
+                    for (let k = 0; k < K; k++) combo.push((r + k) * N + (c - k));
+                    winningCombinations.push(combo);
+                }
+            }
+        }
+
+        function buildBoard() {
+            boardEl.innerHTML = '';
+            boardEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            boardEl.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+
+            boardState = Array(gridSize * gridSize).fill('');
+
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.setAttribute('data-index', i);
+                cell.addEventListener('click', () => handleCellClick(i));
+                cell.addEventListener('touchstart', initAudio, { once: true });
+                boardEl.appendChild(cell);
+            }
+        }
+
+        function handleCellClick(index) {
+            if (boardState[index] !== '' || !gameActive) return;
+
+            if (gameMode === 'global' || gameMode === 'room') {
+                if (currentPlayer !== myRole) return;
+                makeOnlineMove(index);
+                return;
+            }
+
+            makeMove(index, currentPlayer);
+
+            if (gameActive && gameMode === 'ai' && currentPlayer === 'O') {
+                setTimeout(() => {
+                    makeAIMove();
+                }, 200);
+            }
+        }
+
+        function makeMove(index, player) {
+            boardState[index] = player;
+            const cell = boardEl.children[index];
+            cell.innerHTML = player === 'X' ? svgX : svgO;
+            cell.classList.add('occupied');
+
+            playSound(player.toLowerCase());
+
+            if (checkWin(player)) {
+                endGame(false, player);
+            } else if (boardState.every(c => c !== '')) {
+                endGame(true, null);
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                updateStatus();
+            }
+        }
+
+        function updateStatus() {
+            if (gameMode === 'global' || gameMode === 'room') {
+                if (currentPlayer === myRole) {
+                    turnText.innerText = 'GILIRANMU!';
+                } else {
+                    turnText.innerText = 'Lawan...';
+                }
+            } else {
+                turnText.innerText = `GILIRAN ${currentPlayer}`;
+            }
+        }
+
+        function checkWin(player) {
+            return winningCombinations.some(combo => {
+                const isWin = combo.every(idx => boardState[idx] === player);
+                if (isWin) highlightWinningCells(combo);
+                return isWin;
+            });
+        }
+
+        function highlightWinningCells(combo) {
+            combo.forEach(idx => {
+                if (boardEl.children[idx]) {
+                    boardEl.children[idx].classList.add('winning-cell');
+                }
+            });
+        }
+
+        function endGame(isDraw, winner) {
+            gameActive = false;
+
+            if (isDraw) {
+                scores.draw++;
+                scoreDrawEl.innerText = scores.draw;
+                turnText.innerText = 'HASIL SERI!';
+                playSound('draw');
+            } else {
+                scores[winner]++;
+                if (winner === 'X') {
+                    scoreXEl.innerText = scores.X;
+                    turnText.innerText = 'X MENANG!';
+                } else {
+                    scoreOEl.innerText = scores.O;
+                    turnText.innerText = 'O MENANG!';
+                }
+                playSound('win');
+            }
+        }
+
+        function resetGame() {
+            if (gameMode === 'global' || gameMode === 'room') {
+                resetOnlineBoard();
+                return;
+            }
+            gameActive = true;
+            currentPlayer = 'X';
+            buildBoard();
+            updateStatus();
+        }
+
+        function resetScore() {
+            scores = { X: 0, O: 0, draw: 0 };
+            scoreXEl.innerText = '0';
+            scoreOEl.innerText = '0';
+            scoreDrawEl.innerText = '0';
+        }
+
+        // ===== MULTIPLAYER ONLINE & LEADERBOARD (FIREBASE) =====
+        function leaveOnlineRoom() {
+            if (roomUnsubscribe) {
+                roomUnsubscribe();
+                roomUnsubscribe = null;
+            }
+            currentRoomId = null;
+            onlineBadge.style.display = 'none';
+        }
+
+        async function findGlobalMatch() {
+            if (!user || !db) return;
+            leaveOnlineRoom();
+
+            onlineBadge.style.display = 'block';
+            onlineRoomCode.innerText = 'GLOBAL';
+            turnText.innerText = 'Mencari...';
+
+            const publicCol = window.FirebaseModule.collection(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms');
+            const q = window.FirebaseModule.query(publicCol);
+            const snapshot = await window.FirebaseModule.getDocs(q);
+
+            let openRoom = null;
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data.isGlobal && data.status === 'waiting' && data.gridSize === gridSize) {
+                    openRoom = { id: docSnap.id, ...data };
+                }
+            });
+
+            if (openRoom) {
+                currentRoomId = openRoom.id;
+                myRole = 'O';
+                titleX.innerText = 'LAWAN (X)';
+                titleO.innerText = 'ANDA (O)';
+
+                const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
+                await window.FirebaseModule.updateDoc(roomRef, {
+                    playerO: user.uid,
+                    nameO: username,
+                    status: 'playing'
                 });
 
-                players.sort(
-                    (a,b) =>
-                        (b.totalWins || 0) -
-                        (a.totalWins || 0)
-                );
+                subscribeToRoom(currentRoomId);
+            } else {
+                const newRoomId = 'G_' + Math.floor(100000 + Math.random() * 900000);
+                currentRoomId = newRoomId;
+                myRole = 'X';
+                titleX.innerText = 'ANDA (X)';
+                titleO.innerText = 'LAWAN (O)';
 
-                renderLeaderboard(
-                    players
-                );
+                const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
+                await window.FirebaseModule.setDoc(roomRef, {
+                    isGlobal: true,
+                    status: 'waiting',
+                    gridSize: gridSize,
+                    winCondition: winCondition,
+                    playerX: user.uid,
+                    nameX: username,
+                    playerO: null,
+                    nameO: null,
+                    boardState: Array(gridSize * gridSize).fill(''),
+                    currentPlayer: 'X',
+                    winner: null
+                });
 
+                subscribeToRoom(currentRoomId);
             }
-        );
+        }
 
-};
+        async function joinOrCreateRoom() {
+            if (!user || !db) return;
+            const roomCode = document.getElementById('inputRoomCode').value.trim().toUpperCase();
+            if (!roomCode) return;
 
+            leaveOnlineRoom();
+            closeSettingsModal();
 
-function renderLeaderboard(players){
+            currentRoomId = 'R_' + roomCode;
+            const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
+            const roomSnap = await window.FirebaseModule.getDoc(roomRef);
 
-    const list =
-        document.getElementById(
-            "leaderboardList"
-        );
+            if (roomSnap.exists()) {
+                const data = roomSnap.data();
+                if (!data.playerO && data.playerX !== user.uid) {
+                    myRole = 'O';
+                    titleX.innerText = 'LAWAN (X)';
+                    titleO.innerText = 'ANDA (O)';
+                    await window.FirebaseModule.updateDoc(roomRef, {
+                        playerO: user.uid,
+                        nameO: username,
+                        status: 'playing'
+                    });
+                } else {
+                    myRole = data.playerX === user.uid ? 'X' : 'O';
+                    titleX.innerText = myRole === 'X' ? 'ANDA (X)' : 'LAWAN (X)';
+                    titleO.innerText = myRole === 'O' ? 'ANDA (O)' : 'LAWAN (O)';
+                }
+            } else {
+                myRole = 'X';
+                titleX.innerText = 'ANDA (X)';
+                titleO.innerText = 'LAWAN (O)';
+                await window.FirebaseModule.setDoc(roomRef, {
+                    isGlobal: false,
+                    roomCode: roomCode,
+                    status: 'waiting',
+                    gridSize: gridSize,
+                    winCondition: winCondition,
+                    playerX: user.uid,
+                    nameX: username,
+                    playerO: null,
+                    nameO: null,
+                    boardState: Array(gridSize * gridSize).fill(''),
+                    currentPlayer: 'X',
+                    winner: null
+                });
+            }
 
-    list.innerHTML = "";
+            onlineBadge.style.display = 'block';
+            onlineRoomCode.innerText = roomCode;
+            subscribeToRoom(currentRoomId);
+        }
 
-    if(!players.length){
+        function subscribeToRoom(roomId) {
+            const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', roomId);
 
-        list.innerHTML =
-            `<div class="text-center text-gray-400 py-10 text-xs">
-                Belum ada pemain.
-            </div>`;
+            roomUnsubscribe = window.FirebaseModule.onSnapshot(roomRef, (docSnap) => {
+                if (!docSnap.exists()) return;
+                const data = docSnap.data();
 
-        return;
+                gridSize = data.gridSize;
+                winCondition = data.winCondition;
+                generateWinningCombinations();
 
-    }
-
-
-    players.forEach((p,index) => {
-
-        const item =
-            document.createElement("div");
-
-        item.className =
-            "flex items-center gap-3 p-3 mb-2 rounded-2xl "+
-            (
-                p.id === userId
-                    ? "bg-blue-50 border border-blue-100"
-                    : "bg-gray-50"
-            );
-
-
-        item.innerHTML = `
-
-            <div class="w-6 text-xs font-black">
-                ${index+1}
-            </div>
-
-            <div class="w-10 h-10 rounded-full overflow-hidden bg-white border flex items-center justify-center">
-
-                ${
-                    p.avatar
-                    ?
-                    `<img src="${p.avatar}" class="avatar-img">`
-                    :
-                    "👤"
+                if (boardState.length !== data.boardState.length) {
+                    buildBoard();
                 }
 
-            </div>
-
-            <div class="flex-1">
-
-                <div class="text-[12px] font-bold truncate">
-
-                    ${escapeHTML(p.name || "Player")}
-
-                    ${
-                        p.id === userId
-                        ?
-                        `<span class="text-[8px] text-blue-500 ml-1">
-                            ANDA
-                        </span>`
-                        :
-                        ""
+                data.boardState.forEach((val, idx) => {
+                    if (boardState[idx] !== val) {
+                        boardState[idx] = val;
+                        if (val !== '') {
+                            const cell = boardEl.children[idx];
+                            if (cell) {
+                                cell.innerHTML = val === 'X' ? svgX : svgO;
+                                cell.classList.add('occupied');
+                            }
+                        }
                     }
+                });
 
-                </div>
+                currentPlayer = data.currentPlayer;
+                gameActive = data.status === 'playing' || data.status === 'waiting';
 
-                <div class="text-[9px] text-gray-400 uppercase">
-                    ${p.totalWins || 0} Kemenangan
-                </div>
+                if (data.status === 'waiting') {
+                    turnText.innerText = 'MENUNGGU...';
+                } else if (data.status === 'playing') {
+                    updateStatus();
+                }
 
-            </div>
-
-        `;
-
-        list.appendChild(item);
-
-    });
-
-}
-
-
-window.closeLeaderboard =
-function(){
-
-    document
-        .getElementById("leaderboardModal")
-        .classList.replace(
-            "flex",
-            "hidden"
-        );
-
-    if(unsubscribeLeaderboard){
-
-        unsubscribeLeaderboard();
-
-        unsubscribeLeaderboard = null;
-
-    }
-
-};
-
-
-/* =========================================================
-   GAME LOGIC
-========================================================= */
-
-function checkWinCondition(cb,size){
-
-    const winLength =
-        size === 3 ? 3 : 4;
-
-    const directions = [
-        [0,1],
-        [1,0],
-        [1,1],
-        [1,-1]
-    ];
-
-
-    for(let r=0;r<size;r++){
-
-        for(let c=0;c<size;c++){
-
-            const player =
-                cb[r*size+c];
-
-            if(!player)
-                continue;
-
-
-            for(const [dr,dc] of directions){
-
-                const line = [];
-
-                let valid = true;
-
-
-                for(
-                    let k=0;
-                    k<winLength;
-                    k++
-                ){
-
-                    const nr =
-                        r + k*dr;
-
-                    const nc =
-                        c + k*dc;
-
-
-                    if(
-                        nr<0 ||
-                        nr>=size ||
-                        nc<0 ||
-                        nc>=size ||
-                        cb[nr*size+nc] !== player
-                    ){
-
-                        valid = false;
-                        break;
-
+                if (data.winner) {
+                    gameActive = false;
+                    if (data.winner === 'draw') {
+                        turnText.innerText = 'HASIL SERI!';
+                    } else {
+                        const isIWin = data.winner === myRole;
+                        turnText.innerText = isIWin ? 'KAMU MENANG!' : 'LAWAN MENANG!';
+                        if (isIWin) {
+                            recordGlobalWin();
+                        }
                     }
-
-
-                    line.push(
-                        nr*size+nc
-                    );
-
                 }
-
-
-                if(valid){
-
-                    return {
-                        winner:player,
-                        line
-                    };
-
-                }
-
-            }
-
+            });
         }
 
-    }
+        async function makeOnlineMove(index) {
+            boardState[index] = myRole;
+            const nextTurn = myRole === 'X' ? 'O' : 'X';
 
+            const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
 
-    if(cb.includes(""))
-        return null;
+            let isWin = checkWin(myRole);
+            let isDraw = !isWin && boardState.every(c => c !== '');
 
-
-    return {
-        winner:"draw",
-        line:null
-    };
-
-}
-
-
-function initBoard(){
-
-    boardElement.innerHTML = "";
-
-    boardElement.className =
-        `grid grid-${gridSize} gap-2 relative`;
-
-
-    board.forEach(
-        (value,index) => {
-
-            const cell =
-                document.createElement("div");
-
-            cell.className =
-                "cell " +
-                (
-                    gridSize === 3
-                    ? "text-5xl"
-                    : gridSize === 4
-                    ? "text-3xl"
-                    : "text-2xl"
-                );
-
-            cell.dataset.index =
-                index;
-
-            if(value){
-
-                cell.innerText =
-                    value;
-
-                cell.classList.add(
-                    value === "X"
-                        ? "x-mark"
-                        : "o-mark"
-                );
-
-            }
-
-            cell.addEventListener(
-                "click",
-                handleCellClick
-            );
-
-            boardElement.appendChild(
-                cell
-            );
-
-        }
-    );
-
-
-    winLine.classList.add(
-        "hidden"
-    );
-
-}
-
-
-function drawWinningLine(line,player){
-
-    if(!line || !line.length)
-        return;
-
-
-    const start =
-        line[0];
-
-    const end =
-        line[line.length-1];
-
-
-    const startCol =
-        start % gridSize;
-
-    const startRow =
-        Math.floor(
-            start/gridSize
-        );
-
-    const endCol =
-        end % gridSize;
-
-    const endRow =
-        Math.floor(
-            end/gridSize
-        );
-
-
-    const cellSize =
-        100/gridSize;
-
-    const offset =
-        cellSize/2;
-
-
-    winLine.setAttribute(
-        "x1",
-        startCol*cellSize+offset
-    );
-
-    winLine.setAttribute(
-        "y1",
-        startRow*cellSize+offset
-    );
-
-    winLine.setAttribute(
-        "x2",
-        endCol*cellSize+offset
-    );
-
-    winLine.setAttribute(
-        "y2",
-        endRow*cellSize+offset
-    );
-
-
-    winLine.setAttribute(
-        "stroke",
-        player === "X"
-            ? "#d93025"
-            : "#1a73e8"
-    );
-
-
-    winLine.classList.remove(
-        "hidden"
-    );
-
-    winLine.style.animation =
-        "none";
-
-    void winLine.offsetWidth;
-
-    winLine.style.animation = "";
-
-}
-
-
-async function handleCellClick(e){
-
-    initAudio();
-
-    const index =
-        Number(
-            e.currentTarget.dataset.index
-        );
-
-
-    if(
-        !gameActive ||
-        board[index]
-    )
-        return;
-
-
-    if(gameMode === "online"){
-
-        if(
-            !currentRoomId ||
-            mySymbol !== currentPlayer
-        )
-            return;
-
-
-        const nextBoard =
-            [...board];
-
-        nextBoard[index] =
-            mySymbol;
-
-
-        const result =
-            checkWinCondition(
-                nextBoard,
-                gridSize
-            );
-
-
-        const nextPlayer =
-            mySymbol === "X"
-                ? "O"
-                : "X";
-
-
-        const updates = {
-
-            board:nextBoard,
-
-            currentPlayer:
-                result
-                    ? mySymbol
-                    : nextPlayer,
-
-            status:
-                result
-                    ? "finished"
-                    : "playing",
-
-            winner:
-                result
-                    ? result.winner
-                    : null,
-
-            winningLine:
-                result
-                    ? result.line
-                    : null
-
-        };
-
-
-        if(result){
-
-            const newScores =
-                {
-                    ...scores
-                };
-
-            if(result.winner === "X")
-                newScores.X++;
-
-            else if(result.winner === "O")
-                newScores.O++;
-
-            else
-                newScores.draw++;
-
-
-            updates.scores =
-                newScores;
-
-        }
-
-
-        await updateDoc(
-            doc(
-                db,
-                "artifacts",
-                appId,
-                "public",
-                "data",
-                "rooms",
-                currentRoomId
-            ),
-            updates
-        );
-
-
-        return;
-
-    }
-
-
-    makeMove(index);
-
-
-    if(
-        gameMode === "pve" &&
-        gameActive &&
-        currentPlayer === "O"
-    ){
-
-        setTimeout(
-            () => {
-
-                if(
-                    gameActive &&
-                    gameMode === "pve" &&
-                    currentPlayer === "O"
-                ){
-
-                    aiMove();
-
-                }
-
-            },
-            600
-        );
-
-    }
-
-}
-
-
-function makeMove(index){
-
-    if(!gameActive)
-        return;
-
-
-    board[index] =
-        currentPlayer;
-
-
-    const cell =
-        boardElement.children[index];
-
-
-    cell.innerText =
-        currentPlayer;
-
-
-    cell.classList.add(
-        currentPlayer === "X"
-            ? "x-mark"
-            : "o-mark"
-    );
-
-
-    const result =
-        checkWinCondition(
-            board,
-            gridSize
-        );
-
-
-    if(result){
-
-        gameActive =
-            false;
-
-
-        if(result.winner === "draw"){
-
-            scores.draw++;
-
-            playSFX("draw");
-
-            incrementLocalStats(
-                "draw"
-            );
-
-            showModal(
-                "HASIL SERI",
-                "Permainan berakhir seri."
-            );
-
-        }else{
-
-            const winner =
-                result.winner;
-
-            scores[winner]++;
-
-            drawWinningLine(
-                result.line,
-                winner
-            );
-
-            playSFX("win");
-
-            if(gameMode === "pvp"){
-
-                /*
-                   Statistik PvP tidak dimasukkan
-                   ke leaderboard online.
-                */
-
-            }
-
-            showModal(
-                winner === "X"
-                    ? "PEMAIN X MENANG"
-                    : "PEMAIN O MENANG",
-                "Permainan selesai."
-            );
-
-        }
-
-
-        updateScoreBoard();
-
-        return;
-
-    }
-
-
-    currentPlayer =
-        currentPlayer === "X"
-            ? "O"
-            : "X";
-
-
-    updateTurnUI();
-
-}
-
-
-function incrementLocalStats(type){
-
-    if(type === "draw"){
-
-        userProfile.totalDraws =
-            (userProfile.totalDraws || 0)+1;
-
-    }
-
-}
-
-
-function aiMove(){
-
-    if(!gameActive)
-        return;
-
-
-    let move = null;
-
-
-    if(aiDifficulty === "easy"){
-
-        move =
-            getRandomMove();
-
-    }else{
-
-        move =
-            getWinningMove("O") ??
-            getWinningMove("X");
-
-
-        if(
-            move === null &&
-            aiDifficulty === "hard"
-        ){
-
-            move =
-                getStrategicMove();
-
-        }
-
-
-        if(move === null){
-
-            move =
-                getRandomMove();
-
-        }
-
-    }
-
-
-    if(move !== null){
-
-        makeMove(move);
-
-    }
-
-}
-
-
-function getRandomMove(){
-
-    const empty =
-        board
-            .map(
-                (v,i) =>
-                    v === ""
-                        ? i
-                        : null
-            )
-            .filter(
-                v => v !== null
-            );
-
-
-    if(!empty.length)
-        return null;
-
-
-    return empty[
-        Math.floor(
-            Math.random() *
-            empty.length
-        )
-    ];
-
-}
-
-
-function getWinningMove(player){
-
-    for(
-        let i=0;
-        i<board.length;
-        i++
-    ){
-
-        if(board[i] !== "")
-            continue;
-
-
-        const test =
-            [...board];
-
-        test[i] =
-            player;
-
-
-        const result =
-            checkWinCondition(
-                test,
-                gridSize
-            );
-
-
-        if(
-            result &&
-            result.winner === player
-        ){
-
-            return i;
-
-        }
-
-    }
-
-
-    return null;
-
-}
-
-
-function getStrategicMove(){
-
-    const center =
-        Math.floor(
-            board.length/2
-        );
-
-
-    if(board[center] === "")
-        return center;
-
-
-    const corners = [
-
-        0,
-
-        gridSize-1,
-
-        board.length-gridSize,
-
-        board.length-1
-
-    ].filter(
-        i => board[i] === ""
-    );
-
-
-    if(corners.length){
-
-        return corners[
-            Math.floor(
-                Math.random()*
-                corners.length
-            )
-        ];
-
-    }
-
-
-    return null;
-
-}
-
-
-/* =========================================================
-   TURN / SCORE
-========================================================= */
-
-function updateTurnUI(){
-
-    currentPlayerText.innerText =
-        currentPlayer === "X"
-            ? (
-                gameMode === "online"
-                ? (
-                    document.getElementById(
-                        "labelX"
-                    ).innerText
-                )
-                : document.getElementById(
-                    "labelX"
-                ).innerText
-            )
-            : document.getElementById(
-                "labelO"
-            ).innerText;
-
-
-    document.getElementById(
-        "turnPulse"
-    ).className =
-        `w-2 h-2 rounded-full animate-pulse ${
-            currentPlayer === "X"
-                ? "bg-red-600"
-                : "bg-blue-600"
-        }`;
-
-
-    document.getElementById(
-        "boxX"
-    ).style.borderColor =
-        currentPlayer === "X"
-            ? "#d93025"
-            : "transparent";
-
-
-    document.getElementById(
-        "boxO"
-    ).style.borderColor =
-        currentPlayer === "O"
-            ? "#1a73e8"
-            : "transparent";
-
-}
-
-
-function updateScoreBoard(){
-
-    scoreXElement.innerText =
-        scores.X;
-
-    scoreOElement.innerText =
-        scores.O;
-
-    scoreDrawElement.innerText =
-        scores.draw;
-
-}
-
-
-window.resetGame =
-function(){
-
-    board =
-        Array(
-            gridSize*gridSize
-        ).fill("");
-
-    currentPlayer =
-        "X";
-
-    gameActive =
-        true;
-
-    initBoard();
-
-    updateTurnUI();
-
-};
-
-
-window.resetScores =
-function(){
-
-    scores = {
-        X:0,
-        O:0,
-        draw:0
-    };
-
-    updateScoreBoard();
-
-    resetGame();
-
-};
-
-
-/* =========================================================
-   GRID
-========================================================= */
-
-window.changeGrid =
-function(size){
-
-    if(currentRoomId)
-        return;
-
-
-    initAudio();
-
-    gridSize =
-        size;
-
-
-    [3,4,5].forEach(
-        v => {
-
-            const btn =
-                document.getElementById(
-                    "grid"+v
-                );
-
-            btn.className =
-                v === size
-                    ?
-                    "px-4 py-1.5 rounded-full text-[10px] font-bold bg-blue-600 text-white"
-                    :
-                    "px-4 py-1.5 rounded-full text-[10px] font-bold bg-white border";
-
-        }
-    );
-
-
-    resetGame();
-
-};
-
-
-/* =========================================================
-   DIFFICULTY
-========================================================= */
-
-window.changeDifficulty =
-function(level){
-
-    aiDifficulty =
-        level;
-
-    [
-        "easy",
-        "medium",
-        "hard"
-    ].forEach(
-        v => {
-
-            const btn =
-                document.getElementById(
-                    "diff"+
-                    v.charAt(0).toUpperCase()+
-                    v.slice(1)
-                );
-
-            btn.className =
-                v === level
-                    ?
-                    "px-3 py-1.5 rounded-full text-[10px] font-bold bg-blue-600 text-white"
-                    :
-                    "px-3 py-1.5 rounded-full text-[10px] font-bold bg-white border";
-
-        }
-    );
-
-
-    resetGame();
-
-};
-
-
-/* =========================================================
-   MODE
-========================================================= */
-
-window.setMode =
-async function(mode){
-
-    initAudio();
-
-    if(currentRoomId){
-
-        try{
-
-            await deleteDoc(
-                doc(
-                    db,
-                    "artifacts",
-                    appId,
-                    "public",
-                    "data",
-                    "rooms",
-                    currentRoomId
-                )
-            );
-
-        }catch(e){}
-
-    }
-
-
-    cleanupListeners();
-
-
-    currentRoomId =
-        null;
-
-    mySymbol =
-        null;
-
-    matchmakingRoom =
-        null;
-
-
-    gameMode =
-        mode;
-
-
-    resetScores();
-
-
-    document
-        .getElementById("btnPvp")
-        .classList.toggle(
-            "active",
-            mode === "pvp"
-        );
-
-    document
-        .getElementById("btnPve")
-        .classList.toggle(
-            "active",
-            mode === "pve"
-        );
-
-    document
-        .getElementById("btnOnline")
-        .classList.toggle(
-            "active",
-            mode === "online"
-        );
-
-
-    document
-        .getElementById("aiLevelContainer")
-        .classList.toggle(
-            "hidden",
-            mode !== "pve"
-        );
-
-
-    document
-        .getElementById("onlineLobby")
-        .classList.toggle(
-            "hidden",
-            mode !== "online"
-        );
-
-
-    document
-        .getElementById("searchingOverlay")
-        .classList.add(
-            "hidden"
-        );
-
-
-    document
-        .getElementById("gridSelectorContainer")
-        .classList.toggle(
-            "hidden",
-            mode === "online" &&
-            currentRoomId !== null
-        );
-
-
-    document
-        .getElementById("onlineRoomBadge")
-        .classList.add(
-            "hidden"
-        );
-
-
-    document
-        .getElementById("chatPanel")
-        .classList.remove(
-            "open"
-        );
-
-
-    document
-        .getElementById("boardArea")
-        .classList.toggle(
-            "hidden",
-            mode === "online"
-        );
-
-
-    document
-        .getElementById("statusControlArea")
-        .classList.toggle(
-            "hidden",
-            mode === "online"
-        );
-
-
-    updateProfileUI();
-
-    resetGame();
-
-};
-
-
-/* =========================================================
-   ONLINE ROOM
-========================================================= */
-
-function roomRef(id){
-
-    return doc(
-        db,
-        "artifacts",
-        appId,
-        "public",
-        "data",
-        "rooms",
-        id
-    );
-
-}
-
-
-window.createNewRoom =
-async function(){
-
-    if(!userId)
-        return;
-
-
-    initAudio();
-
-
-    const rid =
-        Math.random()
-            .toString(36)
-            .substring(2,8)
-            .toUpperCase();
-
-
-    currentRoomId =
-        rid;
-
-    mySymbol =
-        "X";
-
-
-    const room = {
-
-        board:
-            Array(
-                gridSize*gridSize
-            ).fill(""),
-
-        gridSize,
-
-        currentPlayer:"X",
-
-        players:{
-            X:userId,
-            O:null
-        },
-
-        playerData:{
-            X:{
-                name:userProfile.name,
-                avatar:userProfile.avatar
-            },
-
-            O:null
-        },
-
-        status:"waiting",
-
-        winner:null,
-
-        winningLine:null,
-
-        scores:{
-            X:0,
-            O:0,
-            draw:0
-        },
-
-        isGlobal:false,
-
-        roundId:
-            createRoundId()
-
-    };
-
-
-    await setDoc(
-        roomRef(rid),
-        room
-    );
-
-
-    document
-        .getElementById(
-            "gridSelectorContainer"
-        )
-        .classList.add(
-            "hidden"
-        );
-
-
-    startRoomListener(
-        rid
-    );
-
-};
-
-
-window.joinRoom =
-async function(){
-
-    if(!userId)
-        return;
-
-
-    const input =
-        document.getElementById(
-            "roomInput"
-        );
-
-
-    const rid =
-        input.value
-            .trim()
-            .toUpperCase();
-
-
-    if(!rid){
-
-        showAlert(
-            "Room",
-            "Masukkan kode room."
-        );
-
-        return;
-
-    }
-
-
-    const snap =
-        await getDoc(
-            roomRef(rid)
-        );
-
-
-    if(!snap.exists()){
-
-        showAlert(
-            "ERROR",
-            "Room tidak ditemukan."
-        );
-
-        return;
-
-    }
-
-
-    const data =
-        snap.data();
-
-
-    if(
-        data.players.O &&
-        data.players.O !== userId
-    ){
-
-        showAlert(
-            "PENUH",
-            "Room sudah penuh."
-        );
-
-        return;
-
-    }
-
-
-    if(
-        data.players.X === userId
-    ){
-
-        mySymbol =
-            "X";
-
-    }else{
-
-        mySymbol =
-            "O";
-
-
-        await updateDoc(
-            roomRef(rid),
-            {
-                "players.O":userId,
-
-                "playerData.O":{
-                    name:userProfile.name,
-                    avatar:userProfile.avatar
-                },
-
-                status:"playing",
-
-                roundId:
-                    data.roundId ||
-                    createRoundId()
-            }
-        );
-
-    }
-
-
-    currentRoomId =
-        rid;
-
-
-    document
-        .getElementById(
-            "gridSelectorContainer"
-        )
-        .classList.add(
-            "hidden"
-        );
-
-
-    startRoomListener(
-        rid
-    );
-
-};
-
-
-function startRoomListener(rid){
-
-    cleanupListeners(
-        false
-    );
-
-
-    document
-        .getElementById(
-            "onlineLobby"
-        )
-        .classList.add(
-            "hidden"
-        );
-
-
-    document
-        .getElementById(
-            "boardArea"
-        )
-        .classList.remove(
-            "hidden"
-        );
-
-
-    document
-        .getElementById(
-            "statusControlArea"
-        )
-        .classList.remove(
-            "hidden"
-        );
-
-
-    document
-        .getElementById(
-            "onlineRoomBadge"
-        )
-        .classList.remove(
-            "hidden"
-        );
-
-
-    document
-        .getElementById(
-            "displayRoomId"
-        ).innerText =
-        rid;
-
-
-    onlineResultProcessed =
-        false;
-
-
-    unsubscribeRoom =
-        onSnapshot(
-            roomRef(rid),
-            async snap => {
-
-                if(!snap.exists()){
-
-                    if(currentRoomId === rid){
-
-                        currentRoomId =
-                            null;
-
-                        mySymbol =
-                            null;
-
-                        showAlert(
-                            "ROOM DITUTUP",
-                            "Room sudah tidak tersedia."
-                        );
-
-                        setMode("online");
-
-                    }
-
-                    return;
-
-                }
-
-
-                const data =
-                    snap.data();
-
-
-                gridSize =
-                    data.gridSize || 3;
-
-
-                board =
-                    Array.isArray(data.board)
-                    ?
-                    data.board
-                    :
-                    Array(
-                        gridSize*gridSize
-                    ).fill("");
-
-
-                currentPlayer =
-                    data.currentPlayer || "X";
-
-
-                gameActive =
-                    data.status !== "finished";
-
-
-                scores =
-                    data.scores || {
-                        X:0,
-                        O:0,
-                        draw:0
-                    };
-
-
-                const px =
-                    data.playerData?.X ||
-                    {
-                        name:"Pemain X",
-                        avatar:null
-                    };
-
-
-                const po =
-                    data.playerData?.O ||
-                    {
-                        name:"Menunggu...",
-                        avatar:null
-                    };
-
-
-                document.getElementById(
-                    "labelX"
-                ).innerText =
-                    px.name;
-
-
-                document.getElementById(
-                    "labelO"
-                ).innerText =
-                    po.name;
-
-
-                updateAvatarDisplay(
-                    "X",
-                    px.avatar
-                );
-
-
-                updateAvatarDisplay(
-                    "O",
-                    po.avatar
-                );
-
-
-                onlineRoundId =
-                    data.roundId ||
-                    onlineRoundId;
-
-
-                initBoard();
-
-                updateScoreBoard();
-
-                updateTurnUI();
-
-
-                if(
-                    data.status === "waiting"
-                ){
-
-                    document
-                        .getElementById(
-                            "searchingOverlay"
-                        )
-                        .classList.add(
-                            "hidden"
-                        );
-
-                    document
-                        .getElementById(
-                            "boardArea"
-                        )
-                        .classList.remove(
-                            "hidden"
-                        );
-
-                }
-
-
-                if(
-                    data.status === "finished" &&
-                    data.winner
-                ){
-
-                    await handleOnlineResult(
-                        data
-                    );
-
-                }
-
-            }
-        );
-
-
-    unsubscribeChat =
-        onSnapshot(
-            collection(
-                db,
-                "artifacts",
-                appId,
-                "public",
-                "data",
-                "rooms",
-                rid,
-                "messages"
-            ),
-            snap => {
-
-                const messages = [];
-
-                snap.forEach(
-                    d => {
-
-                        messages.push({
-                            id:d.id,
-                            ...d.data()
-                        });
-
-                    }
-                );
-
-
-                messages.sort(
-                    (a,b) =>
-                        Number(a.timestamp || 0) -
-                        Number(b.timestamp || 0)
-                );
-
-
-                renderChat(
-                    messages
-                );
-
-            }
-        );
-
-}
-
-
-async function handleOnlineResult(data){
-
-    if(
-        onlineResultProcessed &&
-        onlineRoundId === data.roundId
-    )
-        return;
-
-
-    onlineResultProcessed =
-        true;
-
-
-    onlineRoundId =
-        data.roundId;
-
-
-    if(data.winner === "draw"){
-
-        playSFX("draw");
-
-        showModal(
-            "HASIL SERI",
-            "Permainan berakhir seri."
-        );
-
-
-        await incrementGlobalStat(
-            "draw"
-        );
-
-    }else{
-
-        drawWinningLine(
-            data.winningLine,
-            data.winner
-        );
-
-        playSFX("win");
-
-
-        const won =
-            data.winner === mySymbol;
-
-
-        showModal(
-            won
-                ? "ANDA MENANG!"
-                : "ANDA KALAH!",
-            "Permainan selesai."
-        );
-
-
-        await incrementGlobalStat(
-            won
-                ? "win"
-                : "loss"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   ONLINE REMATCH
-========================================================= */
-
-window.handlePlayAgain =
-async function(){
-
-    closeModal();
-
-
-    if(
-        gameMode !== "online" ||
-        !currentRoomId
-    ){
-
-        resetGame();
-
-        return;
-
-    }
-
-
-    const newRound =
-        createRoundId();
-
-
-    await updateDoc(
-        roomRef(currentRoomId),
-        {
-
-            board:
-                Array(
-                    gridSize*gridSize
-                ).fill(""),
-
-            currentPlayer:"X",
-
-            winner:null,
-
-            winningLine:null,
-
-            status:"playing",
-
-            roundId:newRound
-
-        }
-    );
-
-
-    onlineRoundId =
-        newRound;
-
-    onlineResultProcessed =
-        false;
-
-};
-
-
-window.requestReset =
-function(){
-
-    document
-        .getElementById(
-            "resetConfirmModal"
-        )
-        .classList.replace(
-            "hidden",
-            "flex"
-        );
-
-};
-
-
-window.closeResetModal =
-function(){
-
-    document
-        .getElementById(
-            "resetConfirmModal"
-        )
-        .classList.replace(
-            "flex",
-            "hidden"
-        );
-
-};
-
-
-window.confirmReset =
-async function(){
-
-    closeResetModal();
-
-
-    if(
-        gameMode === "online" &&
-        currentRoomId
-    ){
-
-        const newRound =
-            createRoundId();
-
-
-        await updateDoc(
-            roomRef(currentRoomId),
-            {
-
-                board:
-                    Array(
-                        gridSize*gridSize
-                    ).fill(""),
-
-                currentPlayer:"X",
-
-                winner:null,
-
-                winningLine:null,
-
-                status:"playing",
-
-                roundId:newRound
-
-            }
-        );
-
-
-        onlineRoundId =
-            newRound;
-
-        onlineResultProcessed =
-            false;
-
-
-    }else{
-
-        resetGame();
-
-    }
-
-};
-
-
-/* =========================================================
-   GLOBAL MATCHMAKING
-========================================================= */
-
-window.startGlobalMatchmaking =
-async function(){
-
-    if(!userId)
-        return;
-
-
-    initAudio();
-
-
-    document
-        .getElementById(
-            "onlineLobby"
-        )
-        .classList.add(
-            "hidden"
-        );
-
-
-    document
-        .getElementById(
-            "searchingOverlay"
-        )
-        .classList.remove(
-            "hidden"
-        );
-
-
-    const q =
-        query(
-            collection(
-                db,
-                "artifacts",
-                appId,
-                "public",
-                "data",
-                "rooms"
-            ),
-            where(
-                "status",
-                "==",
-                "waiting"
-            ),
-            where(
-                "isGlobal",
-                "==",
-                true
-            ),
-            limit(10)
-        );
-
-
-    const snap =
-        await getDocs(q);
-
-
-    let selected =
-        null;
-
-
-    for(const d of snap.docs){
-
-        const data =
-            d.data();
-
-
-        if(
-            data.players?.X &&
-            data.players.X !== userId
-        ){
-
-            selected = {
-                id:d.id,
-                data
+            let updatePayload = {
+                boardState: boardState,
+                currentPlayer: nextTurn
             };
 
-            break;
+            if (isWin) {
+                updatePayload.winner = myRole;
+                updatePayload.status = 'ended';
+            } else if (isDraw) {
+                updatePayload.winner = 'draw';
+                updatePayload.status = 'ended';
+            }
 
+            await window.FirebaseModule.updateDoc(roomRef, updatePayload);
+            playSound(myRole.toLowerCase());
         }
 
-    }
-
-
-    if(selected){
-
-        currentRoomId =
-            selected.id;
-
-        mySymbol =
-            "O";
-
-
-        await updateDoc(
-            roomRef(
-                selected.id
-            ),
-            {
-
-                "players.O":userId,
-
-                "playerData.O":{
-                    name:userProfile.name,
-                    avatar:userProfile.avatar
-                },
-
-                status:"playing",
-
-                roundId:
-                    selected.data.roundId ||
-                    createRoundId()
-
-            }
-        );
-
-
-        startRoomListener(
-            selected.id
-        );
-
-
-        return;
-
-    }
-
-
-    const rid =
-        "GLB-" +
-        Math.random()
-            .toString(36)
-            .substring(2,6)
-            .toUpperCase();
-
-
-    currentRoomId =
-        rid;
-
-    mySymbol =
-        "X";
-
-
-    await setDoc(
-        roomRef(rid),
-        {
-
-            board:
-                Array(
-                    gridSize*gridSize
-                ).fill(""),
-
-            gridSize,
-
-            currentPlayer:"X",
-
-            players:{
-                X:userId,
-                O:null
-            },
-
-            playerData:{
-                X:{
-                    name:userProfile.name,
-                    avatar:userProfile.avatar
-                },
-                O:null
-            },
-
-            status:"waiting",
-
-            winner:null,
-
-            winningLine:null,
-
-            scores:{
-                X:0,
-                O:0,
-                draw:0
-            },
-
-            isGlobal:true,
-
-            roundId:createRoundId()
-
-        }
-    );
-
-
-    startRoomListener(
-        rid
-    );
-
-};
-
-
-window.cancelMatchmaking =
-async function(){
-
-    if(currentRoomId){
-
-        try{
-
-            await deleteDoc(
-                roomRef(
-                    currentRoomId
-                )
-            );
-
-        }catch(e){}
-
-    }
-
-
-    currentRoomId =
-        null;
-
-    mySymbol =
-        null;
-
-
-    setMode("online");
-
-};
-
-
-/* =========================================================
-   CHAT
-========================================================= */
-
-function renderChat(messages){
-
-    const container =
-        document.getElementById(
-            "chatMessages"
-        );
-
-    container.innerHTML = "";
-
-
-    messages.forEach(m => {
-
-        const bubble =
-            document.createElement(
-                "div"
-            );
-
-
-        const mine =
-            m.senderId === userId;
-
-
-        bubble.className =
-            "chat-bubble " +
-            (
-                mine
-                    ? "chat-me"
-                    : "chat-them"
-            );
-
-
-        if(!mine){
-
-            const sender =
-                document.createElement(
-                    "div"
-                );
-
-            sender.className =
-                "chat-sender";
-
-            sender.innerText =
-                m.senderName ||
-                "User";
-
-            bubble.appendChild(
-                sender
-            );
-
+        async function resetOnlineBoard() {
+            if (!currentRoomId || !db) return;
+            const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
+            await window.FirebaseModule.updateDoc(roomRef, {
+                boardState: Array(gridSize * gridSize).fill(''),
+                currentPlayer: 'X',
+                winner: null,
+                status: 'playing'
+            });
+            buildBoard();
         }
 
+        async function recordGlobalWin() {
+            if (!user || !db) return;
+            const userLeaderboardRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', user.uid);
+            const userSnap = await window.FirebaseModule.getDoc(userLeaderboardRef);
 
-        const text =
-            document.createElement(
-                "div"
-            );
+            let currentWins = 0;
+            if (userSnap.exists()) {
+                currentWins = userSnap.data().wins || 0;
+            }
 
-        text.innerText =
-            m.text || "";
-
-
-        bubble.appendChild(
-            text
-        );
-
-
-        container.appendChild(
-            bubble
-        );
-
-    });
-
-
-    container.scrollTop =
-        container.scrollHeight;
-
-}
-
-
-window.sendChatMessage =
-async function(){
-
-    if(!currentRoomId)
-        return;
-
-
-    const input =
-        document.getElementById(
-            "chatInput"
-        );
-
-
-    const text =
-        input.value.trim();
-
-
-    if(!text)
-        return;
-
-
-    input.value = "";
-
-
-    await addDoc(
-        collection(
-            db,
-            "artifacts",
-            appId,
-            "public",
-            "data",
-            "rooms",
-            currentRoomId,
-            "messages"
-        ),
-        {
-
-            text,
-
-            senderId:userId,
-
-            senderName:userProfile.name,
-
-            timestamp:Date.now()
-
+            await window.FirebaseModule.setDoc(userLeaderboardRef, {
+                username: username,
+                wins: currentWins + 1,
+                updatedAt: Date.now()
+            });
         }
-    );
 
-};
+        async function fetchLeaderboard() {
+            if (!db) return;
+            leaderboardList.innerHTML = '<div style="text-align:center; font-size:0.8rem; color:var(--text-sub); padding:16px;">Memuat Peringkat...</div>';
 
+            const leaderCol = window.FirebaseModule.collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            const q = window.FirebaseModule.query(leaderCol);
+            const snapshot = await window.FirebaseModule.getDocs(q);
 
-window.toggleChat =
-function(){
+            let list = [];
+            snapshot.forEach(docSnap => {
+                list.push(docSnap.data());
+            });
 
-    const panel =
-        document.getElementById(
-            "chatPanel"
-        );
+            list.sort((a, b) => b.wins - a.wins);
 
-
-    const open =
-        panel.classList.toggle(
-            "open"
-        );
-
-
-    if(open){
-
-        document
-            .getElementById(
-                "chatDot"
-            )
-            .classList.add(
-                "hidden"
-            );
-
-    }
-
-};
-
-
-window.copyRoomId =
-function(){
-
-    const text =
-        document.getElementById(
-            "displayRoomId"
-        ).innerText;
-
-
-    navigator.clipboard
-        ?.writeText(text)
-        .then(
-            () => showToast(
-                "KODE DISALIN!"
-            )
-        )
-        .catch(
-            () => {
-
-                const area =
-                    document.createElement(
-                        "textarea"
-                    );
-
-                area.value =
-                    text;
-
-                document.body.appendChild(
-                    area
-                );
-
-                area.select();
-
-                document.execCommand(
-                    "copy"
-                );
-
-                area.remove();
-
-                showToast(
-                    "KODE DISALIN!"
-                );
-
-            }
-        );
-
-};
-
-
-/* =========================================================
-   ADMIN
-========================================================= */
-
-window.openAdminPanel =
-async function(){
-
-    if(
-        !ADMIN_UID ||
-        ADMIN_UID === "ISI_UID_ADMIN_DI_SINI" ||
-        userId !== ADMIN_UID
-    ){
-
-        showAlert(
-            "AKSES DITOLAK",
-            "Anda bukan administrator."
-        );
-
-        return;
-
-    }
-
-
-    document
-        .getElementById(
-            "adminPanelModal"
-        )
-        .classList.replace(
-            "hidden",
-            "flex"
-        );
-
-
-    if(unsubscribeAdmin)
-        unsubscribeAdmin();
-
-
-    unsubscribeAdmin =
-        onSnapshot(
-            collection(
-                db,
-                "artifacts",
-                appId,
-                "public",
-                "data",
-                "leaderboard"
-            ),
-            snap => {
-
-                const players = [];
-
-                snap.forEach(
-                    d => {
-
-                        players.push({
-                            uid:d.id,
-                            ...d.data()
-                        });
-
-                    }
-                );
-
-
-                players.sort(
-                    (a,b) =>
-                        (b.totalWins || 0) -
-                        (a.totalWins || 0)
-                );
-
-
-                renderAdminPlayers(
-                    players
-                );
-
-            }
-        );
-
-};
-
-
-function renderAdminPlayers(players){
-
-    const list =
-        document.getElementById(
-            "adminPlayerList"
-        );
-
-    list.innerHTML = "";
-
-
-    players.forEach(p => {
-
-        if(p.uid === userId)
-            return;
-
-
-        const item =
-            document.createElement(
-                "div"
-            );
-
-
-        item.className =
-            "p-4 mb-3 rounded-2xl bg-gray-50 border flex flex-col gap-3";
-
-
-        item.innerHTML = `
-
-            <div class="flex items-center gap-3">
-
-                <div class="w-10 h-10 rounded-full overflow-hidden bg-white border flex items-center justify-center">
-
-                    ${
-                        p.avatar
-                        ?
-                        `<img src="${p.avatar}" class="avatar-img">`
-                        :
-                        "👤"
-                    }
-
-                </div>
-
-                <div class="flex-1">
-
-                    <div class="text-[11px] font-black">
-                        ${escapeHTML(p.name || "Player")}
-                    </div>
-
-                    <div class="text-[9px] text-gray-500">
-                        UID: ${p.uid.substring(0,8)}...
-                        |
-                        WIN: ${p.totalWins || 0}
-                    </div>
-
-                </div>
-
-            </div>
-
-            <div class="flex gap-2">
-
-                <button
-                    onclick="adminAdjustScore('${p.uid}',1)"
-                    class="flex-1 bg-green-100 text-green-700 text-[9px] font-bold py-2 rounded-xl">
-                    + SCORE
-                </button>
-
-                <button
-                    onclick="adminAdjustScore('${p.uid}',-1)"
-                    class="flex-1 bg-orange-100 text-orange-700 text-[9px] font-bold py-2 rounded-xl">
-                    - SCORE
-                </button>
-
-            </div>
-
-        `;
-
-
-        list.appendChild(
-            item
-        );
-
-    });
-
-}
-
-
-window.adminAdjustScore =
-async function(uid,amount){
-
-    if(userId !== ADMIN_UID)
-        return;
-
-
-    try{
-
-        await updateDoc(
-            doc(
-                db,
-                "artifacts",
-                appId,
-                "public",
-                "data",
-                "leaderboard",
-                uid
-            ),
-            {
-                totalWins:
-                    increment(amount)
-            }
-        );
-
-
-        await updateDoc(
-            doc(
-                db,
-                "artifacts",
-                appId,
-                "users",
-                uid,
-                "profile",
-                "data"
-            ),
-            {
-                totalWins:
-                    increment(amount)
-            }
-        );
-
-
-    }catch(e){
-
-        console.error(e);
-
-    }
-
-};
-
-
-window.closeAdminPanel =
-function(){
-
-    document
-        .getElementById(
-            "adminPanelModal"
-        )
-        .classList.replace(
-            "flex",
-            "hidden"
-        );
-
-
-    if(unsubscribeAdmin){
-
-        unsubscribeAdmin();
-
-        unsubscribeAdmin = null;
-
-    }
-
-};
-
-
-/* =========================================================
-   PING
-========================================================= */
-
-function startPingMonitor(){
-
-    setInterval(
-        async () => {
-
-            if(gameMode !== "online"){
-
-                document
-                    .getElementById(
-                        "pingIndicator"
-                    )
-                    .classList.add(
-                        "hidden"
-                    );
-
+            if (list.length === 0) {
+                leaderboardList.innerHTML = '<div style="text-align:center; font-size:0.8rem; color:var(--text-sub); padding:16px;">Belum ada peringkat online.</div>';
                 return;
-
             }
 
-
-            document
-                .getElementById(
-                    "pingIndicator"
-                )
-                .classList.remove(
-                    "hidden"
-                );
-
-
-            const start =
-                Date.now();
-
-
-            try{
-
-                await getDoc(
-                    doc(
-                        db,
-                        "artifacts",
-                        appId,
-                        "public",
-                        "data",
-                        "ping_check",
-                        "heartbeat"
-                    )
-                );
-
-
-                const latency =
-                    Date.now()-start;
-
-
-                document.getElementById(
-                    "pingValue"
-                ).innerText =
-                    latency+" ms";
-
-
-                document.getElementById(
-                    "pingDot"
-                ).className =
-                    "ping-dot "+
-                    (
-                        latency < 150
-                            ? "ping-good"
-                            : latency < 400
-                            ? "ping-med"
-                            : "ping-bad"
-                    );
-
-            }catch(e){
-
-                document.getElementById(
-                    "pingValue"
-                ).innerText =
-                    "ERR";
-
-            }
-
-        },
-        10000
-    );
-
-}
-
-
-/* =========================================================
-   MODALS
-========================================================= */
-
-function showModal(title,subtitle){
-
-    document.getElementById(
-        "winnerText"
-    ).innerText =
-        title;
-
-    document.getElementById(
-        "winnerSubtext"
-    ).innerText =
-        subtitle;
-
-
-    document
-        .getElementById(
-            "statusModal"
-        )
-        .classList.replace(
-            "hidden",
-            "flex"
-        );
-
-}
-
-
-function closeModal(){
-
-    document
-        .getElementById(
-            "statusModal"
-        )
-        .classList.replace(
-            "flex",
-            "hidden"
-        );
-
-}
-
-
-function showAlert(title,message){
-
-    document.getElementById(
-        "alertTitle"
-    ).innerText =
-        title;
-
-    document.getElementById(
-        "alertMessage"
-    ).innerText =
-        message;
-
-
-    document
-        .getElementById(
-            "alertModal"
-        )
-        .classList.replace(
-            "hidden",
-            "flex"
-        );
-
-}
-
-
-window.closeAlertModal =
-function(){
-
-    document
-        .getElementById(
-            "alertModal"
-        )
-        .classList.replace(
-            "flex",
-            "hidden"
-        );
-
-};
-
-
-function showToast(text){
-
-    const toast =
-        document.getElementById(
-            "toast"
-        );
-
-    toast.innerText =
-        text;
-
-    toast.style.opacity =
-        "1";
-
-
-    setTimeout(
-        () => {
-
-            toast.style.opacity =
-                "0";
-
-        },
-        2000
-    );
-
-}
-
-
-/* =========================================================
-   CLEANUP
-========================================================= */
-
-function cleanupListeners(
-    keepRoom = false
-){
-
-    if(
-        unsubscribeRoom &&
-        !keepRoom
-    ){
-
-        unsubscribeRoom();
-
-        unsubscribeRoom = null;
-
-    }
-
-
-    if(unsubscribeChat){
-
-        unsubscribeChat();
-
-        unsubscribeChat = null;
-
-    }
-
-}
-
-
-/* =========================================================
-   UTILITIES
-========================================================= */
-
-function createRoundId(){
-
-    return (
-        Date.now()
-        .toString(36) +
-        Math.random()
-            .toString(36)
-            .substring(2,8)
-    ).toUpperCase();
-
-}
-
-
-function escapeHTML(value){
-
-    return String(value)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-
-}
-
-
-/* =========================================================
-   ENTER CHAT
-========================================================= */
-
-document
-    .getElementById(
-        "chatInput"
-    )
-    .addEventListener(
-        "keydown",
-        e => {
-
-            if(e.key === "Enter"){
-
-                e.preventDefault();
-
-                sendChatMessage();
-
-            }
-
+            let html = '';
+            list.slice(0, 10).forEach((item, idx) => {
+                const rankClass = idx === 0 ? 'rank-1' : (idx === 1 ? 'rank-2' : (idx === 2 ? 'rank-3' : ''));
+                const top3Class = idx < 3 ? 'top3' : '';
+
+                html += `
+                    <div class="leaderboard-item ${top3Class}">
+                        <div class="player-info">
+                            <span class="rank-badge ${rankClass}">${idx + 1}</span>
+                            <span class="player-name">${item.username || 'Pemain'}</span>
+                        </div>
+                        <span class="win-count">${item.wins} Menang</span>
+                    </div>
+                `;
+            });
+
+            leaderboardList.innerHTML = html;
         }
-    );
 
+        // AI Logic
+        function makeAIMove() {
+            if (!gameActive) return;
+            let moveIndex;
 
-/* =========================================================
-   INITIALIZE
-========================================================= */
+            if (aiDifficulty === 'easy') {
+                moveIndex = getRandomMove();
+            } else if (aiDifficulty === 'medium') {
+                moveIndex = Math.random() > 0.4 ? getHeuristicMove() : getRandomMove();
+            } else {
+                moveIndex = getHeuristicMove();
+            }
 
-window.addEventListener(
-    "click",
-    () => {
+            if (moveIndex !== null && moveIndex !== undefined) {
+                makeMove(moveIndex, 'O');
+            }
+        }
 
-        if(!audioCtx)
-            initAudio();
+        function getRandomMove() {
+            const avail = boardState.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+            if (avail.length === 0) return null;
+            return avail[Math.floor(Math.random() * avail.length)];
+        }
 
-    },
-    {once:true}
-);
+        function getHeuristicMove() {
+            for (let i = 0; i < boardState.length; i++) {
+                if (boardState[i] === '') {
+                    boardState[i] = 'O';
+                    if (checkWinningState('O')) {
+                        boardState[i] = '';
+                        return i;
+                    }
+                    boardState[i] = '';
+                }
+            }
 
+            for (let i = 0; i < boardState.length; i++) {
+                if (boardState[i] === '') {
+                    boardState[i] = 'X';
+                    if (checkWinningState('X')) {
+                        boardState[i] = '';
+                        return i;
+                    }
+                    boardState[i] = '';
+                }
+            }
 
-window.onload =
-function(){
+            let bestScore = -Infinity;
+            let bestMoves = [];
 
-    initBoard();
+            for (let i = 0; i < boardState.length; i++) {
+                if (boardState[i] === '') {
+                    let score = evaluateCell(i);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMoves = [i];
+                    } else if (score === bestScore) {
+                        bestMoves.push(i);
+                    }
+                }
+            }
 
-    updateScoreBoard();
+            return bestMoves.length > 0 ? bestMoves[Math.floor(Math.random() * bestMoves.length)] : getRandomMove();
+        }
 
-    updateTurnUI();
+        function checkWinningState(player) {
+            return winningCombinations.some(combo => combo.every(idx => boardState[idx] === player));
+        }
 
-};
+        function evaluateCell(index) {
+            let score = 0;
+            const center = Math.floor((gridSize * gridSize) / 2);
 
+            if (index === center) score += 5;
 
-/* =========================================================
-   GLOBAL ERROR HANDLER
-========================================================= */
+            winningCombinations.forEach(combo => {
+                if (combo.includes(index)) {
+                    let oCount = 0;
+                    let xCount = 0;
+                    combo.forEach(idx => {
+                        if (boardState[idx] === 'O') oCount++;
+                        if (boardState[idx] === 'X') xCount++;
+                    });
 
-window.addEventListener(
-    "error",
-    e => {
+                    if (xCount === 0) score += (oCount + 1) * 2;
+                    if (oCount === 0) score += (xCount + 1);
+                }
+            });
 
-        console.error(
-            "JS ERROR:",
-            e.error || e.message
-        );
+            return score;
+        }
 
-    }
-);
-
-</script>
-
+        // Init
+        generateWinningCombinations();
+        resetGame();
+    </script>
 </body>
 </html>
+
+    pingVal.innerText = latency + ' ms';
+                    pingDot.className = 'ping-dot ' + (latency < 150 ? 'ping-good' : latency < 400 ? 'ping-med' : 'ping-bad');
+                } catch (e) { pingVal.innerText = 'Err'; }
+            }, 10000);
+        }
+
+        // --- ADMIN HELPERS ---
+        async function checkBanStatus() {
+            if (!userId) return;
+            const banRef = doc(db, 'artifacts', appId, 'public', 'data', 'banned', userId);
+            const snap = await getDoc(banRef);
+            if (snap.exists()) {
+                document.body.innerHTML = `
+                <div class="h-screen w-full flex flex-col items-center justify-center p-10 bg-black text-white text-center">
+                    <div class="w-24 h-24 mb-6 text-red-600">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,2L1,21H23L12,2M12,6L19.53,19H4.47L12,6M11,10V14H13V10H11M11,16V18H13V16H11Z"/></svg>
+                    </div>
+                    <h1 class="text-3xl font-black mb-4">AKSES DIBLOKIR</h1>
+                    <p class="text-gray-400 font-bold uppercase tracking-widest text-sm">Akun Anda telah di-banned oleh FAUZIDEV karena pelanggaran kebijakan.</p>
+                </div>`;
+            }
+        }
+
+        // --- UTILS ---
+        function formatName(name, showBadge = false) {
+            const isFauzi = name.toUpperCase() === 'FAUZIDEV';
+            let res = name;
+            if (isFauzi) {
+                res += BLUE_CHECK;
+                if (showBadge) res += '<span class="admin-badge">ADMIN</span>';
+            }
+            return res;
+        }
+
+        window.showErrorModal = (title, message) => {
+            document.getElementById('alertTitle').innerText = title;
+            document.getElementById('alertMessage').innerText = message;
+            const modal = document.getElementById('alertModal');
+            modal.classList.replace('hidden', 'flex');
+            setTimeout(() => document.getElementById('alertModalContent').classList.replace('scale-90', 'scale-100'), 10);
+        };
+        window.closeAlertModal = () => {
+            document.getElementById('alertModalContent').classList.replace('scale-100', 'scale-90');
+            setTimeout(() => document.getElementById('alertModal').classList.replace('flex', 'hidden'), 200);
+        };
+
+        // --- PROFILE TABS LOGIC ---
+        window.switchProfileTab = (tab) => {
+            playSFX('click');
+            const sections = document.querySelectorAll('.profile-section');
+            const btns = document.querySelectorAll('.profile-tab-btn');
+            
+            sections.forEach(s => s.classList.add('hidden'));
+            btns.forEach(b => b.classList.remove('active'));
+            
+            if (tab === 'account') {
+                document.getElementById('profileTabAccount').classList.remove('hidden');
+                document.getElementById('tabBtnAccount').classList.add('active');
+            } else if (tab === 'stats') {
+                document.getElementById('profileTabStats').classList.remove('hidden');
+                document.getElementById('tabBtnStats').classList.add('active');
+                updateStatsTab();
+            } else if (tab === 'achievements') {
+                document.getElementById('profileTabAchievements').classList.remove('hidden');
+                document.getElementById('tabBtnAchievements').classList.add('active');
+                renderAchievements();
+            }
+        };
+
+        function updateStatsTab() {
+            const wins = userProfile.totalWins || 0;
+            const played = userProfile.totalPlayed || 0;
+            const rate = played > 0 ? Math.round((wins / played) * 100) : 0;
+            
+            document.getElementById('statWin').innerText = wins;
+            document.getElementById('statLoss').innerText = userProfile.totalLosses || 0;
+            document.getElementById('statDraw').innerText = userProfile.totalDraws || 0;
+            document.getElementById('statPlayed').innerText = played;
+            
+            document.getElementById('winRateVal').innerText = rate + '%';
+            document.getElementById('winRateBar').style.width = rate + '%';
+        }
+
+        // --- PROFILE SYNC ---
+        async function loadUserProfile() {
+            if (!userId) return;
+            const profileRef = doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data');
+            const snap = await getDoc(profileRef);
+            if (snap.exists()) { 
+                userProfile = { ...userProfile, ...snap.data() }; 
+                selectedAvatarUrl = userProfile.avatar; 
+            } 
+            else { 
+                userProfile = { name: 'Player' + Math.floor(1000 + Math.random() * 9000), avatar: null, totalWins: 0, totalLosses: 0, totalDraws: 0, totalPlayed: 0, unlockedAchievements: [] }; 
+                await setDoc(profileRef, userProfile); 
+            }
+            updateProfileUI();
+            updateLeaderboardEntry();
+            
+            if (userProfile.name.toUpperCase() === 'FAUZIDEV') {
+                document.getElementById('adminTrigger').classList.replace('hidden', 'flex');
+            }
+        }
+
+        function updateProfileUI() {
+            const hImg = document.getElementById('headerAvatar');
+            const hFallback = document.getElementById('headerAvatarFallback');
+            if (userProfile.avatar) { hImg.src = userProfile.avatar; hImg.classList.remove('hidden'); hFallback.classList.add('hidden'); } 
+            else { hImg.classList.add('hidden'); hFallback.classList.remove('hidden'); }
+            document.getElementById('profileNameInput').value = userProfile.name;
+            
+            if (gameMode !== 'online') {
+                document.getElementById('labelX').innerHTML = formatName(userProfile.name, false);
+                updateAvatarDisplay('X', userProfile.avatar);
+                document.getElementById('labelO').innerText = (gameMode === 'pve' ? 'BOT AI' : 'TEMAN');
+                updateAvatarDisplay('O', gameMode === 'pve' ? 'https://ui-avatars.com/api/?name=BOT&background=000&color=fff' : null);
+            }
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievementsList');
+            container.innerHTML = '';
+            ACHIEVEMENTS.forEach(ach => {
+                const isUnlocked = userProfile.unlockedAchievements?.includes(ach.id);
+                const card = document.createElement('div');
+                card.className = `achievement-card ${isUnlocked ? 'unlocked' : ''}`;
+                
+                const progress = ach.type === 'totalWins' ? userProfile.totalWins : ach.type === 'totalDraws' ? userProfile.totalDraws : userProfile.totalPlayed;
+                const perc = Math.min(100, Math.round((progress / ach.goal) * 100));
+
+                card.innerHTML = `
+                    <div class="achievement-badge-v2">
+                        ${ACHIEV_ICONS[ach.icon]}
+                    </div>
+                    <div class="flex-1 text-left">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <span class="text-[11px] font-black ${isUnlocked ? 'text-[#1a73e8]' : 'text-[#5f6368]'} uppercase">${ach.title}</span>
+                            ${isUnlocked ? '<span class="text-[8px] bg-green-100 text-green-700 px-1.5 rounded uppercase font-bold">Done</span>' : `<span class="text-[8px] text-gray-400 font-bold">${progress}/${ach.goal}</span>`}
+                        </div>
+                        <p class="text-[8px] text-gray-400 font-medium mb-2">${ach.desc}</p>
+                        ${!isUnlocked ? `
+                        <div class="w-full bg-[#f1f3f4] h-1 rounded-full overflow-hidden">
+                            <div class="bg-blue-400 h-full" style="width: ${perc}%"></div>
+                        </div>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function updateLeaderboardEntry() {
+            const lbRef = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', userId);
+            await setDoc(lbRef, { name: userProfile.name, avatar: userProfile.avatar, totalWins: userProfile.totalWins || 0 }, { merge: true });
+        }
+
+        function updateAvatarDisplay(side, url) {
+            const img = document.getElementById(`avatar${side}`);
+            const fb = document.getElementById(`fallback${side}`);
+            if (url) { img.src = url; img.classList.remove('hidden'); fb.classList.add('hidden'); } 
+            else { img.classList.add('hidden'); fb.classList.remove('hidden'); }
+        }
+
+        function renderAvatarOptions() {
+            const container = document.getElementById('avatarSelector'); container.innerHTML = '';
+            avatarOptions.forEach(url => {
+                const btn = document.createElement('div');
+                btn.className = `avatar-option ${selectedAvatarUrl === url ? 'selected' : ''}`;
+                if (url) btn.innerHTML = `<img src="${url}" class="avatar-img">`;
+                else btn.innerHTML = `<svg class="w-6 h-6 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+                btn.onclick = () => { selectedAvatarUrl = url; renderAvatarOptions(); };
+                container.appendChild(btn);
+            });
+        }
+
+        window.openProfileModal = () => { playSFX('click'); document.getElementById('profileModal').classList.replace('hidden', 'flex'); setTimeout(() => document.getElementById('profileModalContent').classList.replace('scale-90', 'scale-100'), 10); renderAvatarOptions(); switchProfileTab('account'); };
+        window.closeProfileModal = () => { playSFX('click'); document.getElementById('profileModalContent').classList.replace('scale-100', 'scale-90'); setTimeout(() => document.getElementById('profileModal').classList.replace('flex', 'hidden'), 200); };
+        
+        window.saveProfile = async () => {
+            const newName = document.getElementById('profileNameInput').value.trim() || 'Pemain';
+            const nameKey = newName.toLowerCase();
+            const usernameRef = doc(db, 'artifacts', appId, 'public', 'data', 'usernames', nameKey);
+            const nameSnap = await getDoc(usernameRef);
+            if (nameSnap.exists() && nameSnap.data().uid !== userId) {
+                showErrorModal("Gagal", `Nama "${newName}" sudah diklaim orang lain! Pilih nama lain.`);
+                return;
+            }
+            await setDoc(usernameRef, { uid: userId });
+            userProfile.name = newName; 
+            userProfile.avatar = selectedAvatarUrl;
+            updateProfileUI();
+            closeProfileModal();
+            await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), userProfile);
+            if (currentRoomId && mySymbol) { 
+                const upd = {}; upd[`playerData.${mySymbol}`] = { name: newName, avatar: selectedAvatarUrl }; 
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), upd); 
+            }
+            updateLeaderboardEntry();
+            updateTurnUI();
+            if (newName.toUpperCase() === 'FAUZIDEV') document.getElementById('adminTrigger').classList.replace('hidden', 'flex');
+            else document.getElementById('adminTrigger').classList.replace('flex', 'hidden');
+        };
+
+        // --- ADMIN PANEL FUNCTIONS ---
+        window.openAdminPanel = async () => {
+            if (userProfile.name.toUpperCase() !== 'FAUZIDEV') return;
+            playSFX('click');
+            document.getElementById('adminPanelModal').classList.replace('hidden', 'flex');
+            setTimeout(() => document.getElementById('adminPanelContent').classList.replace('scale-90', 'scale-100'), 10);
+            const lbCol = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            onSnapshot(lbCol, (snap) => {
+                const players = [];
+                snap.forEach(d => players.push({ uid: d.id, ...d.data() }));
+                players.sort((a,b) => b.totalWins - a.totalWins);
+                renderAdminPlayerList(players);
+            });
+        };
+
+        window.closeAdminPanel = () => {
+            playSFX('click');
+            document.getElementById('adminPanelContent').classList.replace('scale-100', 'scale-90');
+            setTimeout(() => document.getElementById('adminPanelModal').classList.replace('flex', 'hidden'), 200);
+        };
+
+        async function renderAdminPlayerList(players) {
+            const list = document.getElementById('adminPlayerList');
+            list.innerHTML = '';
+            const bannedSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'banned'));
+            const bannedUids = bannedSnap.docs.map(d => d.id);
+            players.forEach((p) => {
+                if (p.uid === userId) return; 
+                const isBanned = bannedUids.includes(p.uid);
+                const item = document.createElement('div');
+                item.className = `p-4 mb-3 rounded-2xl bg-[#f8f9fa] border border-gray-100 flex flex-col gap-3`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full overflow-hidden bg-white border border-gray-200">
+                            ${p.avatar ? `<img src="${p.avatar}" class="avatar-img">` : `<svg class="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="12"/></svg>`}
+                        </div>
+                        <div class="flex-1 text-left">
+                            <div class="text-[11px] font-black text-[#1f1f1f] flex items-center gap-1">
+                                ${p.name} ${isBanned ? '<span class="text-[7px] bg-red-600 text-white px-1.5 rounded uppercase">Banned</span>' : ''}
+                            </div>
+                            <div class="text-[9px] text-gray-500 font-bold">UID: ${p.uid.substring(0,8)}... | Win: ${p.totalWins}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="adminAdjustScore('${p.uid}', 1)" class="flex-1 bg-green-100 text-green-700 text-[8px] font-bold py-2 rounded-xl border border-green-200">+ SKOR</button>
+                        <button onclick="adminAdjustScore('${p.uid}', -1)" class="flex-1 bg-orange-100 text-orange-700 text-[8px] font-bold py-2 rounded-xl border border-orange-200">- SKOR</button>
+                        ${isBanned 
+                            ? `<button onclick="adminRequestUnban('${p.uid}')" class="flex-1 bg-blue-600 text-white text-[8px] font-bold py-2 rounded-xl">UNBAN</button>`
+                            : `<button onclick="adminRequestBan('${p.uid}')" class="flex-1 bg-red-600 text-white text-[8px] font-bold py-2 rounded-xl">BAN</button>`
+                        }
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.adminAdjustScore = async (targetUid, amount) => {
+            const playerRefPublic = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', targetUid);
+            const playerRefPrivate = doc(db, 'artifacts', appId, 'users', targetUid, 'profile', 'data');
+            try {
+                await updateDoc(playerRefPublic, { totalWins: increment(amount) });
+                await updateDoc(playerRefPrivate, { totalWins: increment(amount) }).catch(() => {});
+            } catch(e) { console.error(e); }
+        };
+
+        // --- LEADERBOARD ---
+        window.openLeaderboard = () => {
+            playSFX('click');
+            document.getElementById('leaderboardModal').classList.replace('hidden', 'flex');
+            setTimeout(() => document.getElementById('leaderboardModalContent').classList.replace('scale-90', 'scale-100'), 10);
+            const lbCol = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            onSnapshot(lbCol, (snap) => {
+                const players = [];
+                snap.forEach(d => players.push({ id: d.id, ...d.data() }));
+                players.sort((a,b) => b.totalWins - a.totalWins);
+                renderLeaderboard(players);
+            }, (err) => console.error("Leaderboard fail:", err));
+        };
+
+        function renderLeaderboard(players) {
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = '';
+            players.forEach((p, idx) => {
+                const item = document.createElement('div');
+                item.className = `flex items-center gap-3 p-3 mb-2 rounded-2xl ${p.id === userId ? 'bg-blue-50 border border-blue-100' : 'bg-[#f8f9fa]'}`;
+                const rankColor = idx === 0 ? 'text-[#f9ab00]' : idx === 1 ? 'text-[#9e9e9e]' : idx === 2 ? 'text-[#cd7f32]' : 'text-gray-400';
+                item.innerHTML = `
+                    <div class="w-6 text-xs font-black ${rankColor}">${idx + 1}</div>
+                    <div class="w-10 h-10 rounded-full overflow-hidden bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                        ${p.avatar ? `<img src="${p.avatar}" class="avatar-img">` : `<svg class="w-5 h-5 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
+                    </div>
+                    <div class="flex-1 text-left">
+                        <div class="text-[12px] font-bold text-[#1f1f1f] truncate w-32 flex items-center">
+                            ${formatName(p.name, true)} 
+                            ${p.id === userId ? '<span class="text-[8px] text-blue-500 ml-1 font-black">(ANDA)</span>' : ''}
+                        </div>
+                        <div class="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">${p.totalWins} Kemenangan</div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        window.closeLeaderboard = () => {
+            playSFX('click');
+            document.getElementById('leaderboardModalContent').classList.replace('scale-100', 'scale-90');
+            setTimeout(() => document.getElementById('leaderboardModal').classList.replace('flex', 'hidden'), 200);
+        };
+
+        // --- GAME CORE ---
+        function checkWinCondition(cb, size) {
+            const winLength = size === 3 ? 3 : 4; 
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const p = cb[r * size + c]; if (!p) continue;
+                    const checks = [[0,1], [1,0], [1,1], [1,-1]];
+                    for (let [dr, dc] of checks) {
+                        let win = true, line = [];
+                        for (let k = 0; k < winLength; k++) {
+                            const nr = r + k * dr, nc = c + k * dc;
+                            if (nr < 0 || nr >= size || nc < 0 || nc >= size || cb[nr * size + nc] !== p) { win = false; break; }
+                            line.push(nr * size + nc);
+                        }
+                        if (win) return { winner: p, line };
+                    }
+                }
+            }
+            return cb.includes('') ? null : { winner: 'draw', line: null };
+        }
+
+        function initBoard() {
+            boardElement.innerHTML = ''; boardElement.className = `grid grid-${gridSize} gap-2 relative`;
+            board.forEach((cell, index) => {
+                const el = document.createElement('div'); el.classList.add('cell');
+                if (gridSize === 3) el.classList.add('text-5xl', 'font-extrabold'); else if (gridSize === 4) el.classList.add('text-3xl', 'font-bold'); else el.classList.add('text-2xl', 'font-bold');
+                el.dataset.index = index; el.addEventListener('click', handleCellClick);
+                if (cell !== '') { el.innerText = cell; el.classList.add(cell === 'X' ? 'x-mark' : 'o-mark'); }
+                boardElement.appendChild(el);
+            });
+            winLine.classList.add('hidden');
+        }
+
+        function drawWinningLine(li) {
+            const s = gridSize, sIdx = li[0], eIdx = li[li.length - 1];
+            const sc = sIdx % s, sr = Math.floor(sIdx / s), ec = eIdx % s, er = Math.floor(eIdx / s);
+            const cs = 100 / s, os = cs / 2;
+            winLine.setAttribute('x1', sc * cs + os); winLine.setAttribute('y1', sr * cs + os);
+            winLine.setAttribute('x2', ec * cs + os); winLine.setAttribute('y2', er * cs + os);
+            winLine.setAttribute('stroke', currentPlayer === 'X' ? '#d93025' : '#1a73e8');
+            winLine.classList.remove('hidden'); winLine.style.animation = 'none'; winLine.offsetHeight; winLine.style.animation = null;
+        }
+
+        window.changeGrid = (size) => { initAudio(); playSFX('click'); if (currentRoomId) return; gridSize = size; board = Array(size * size).fill(''); [3,4,5].forEach(v => { const b = document.getElementById(`grid${v}`); b.className = (v === size) ? "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#1a73e8] text-white shadow-sm transition-all" : "px-4 py-1.5 rounded-full text-[10px] font-bold bg-[#ffffff] text-[#444746] border border-[#e0e0e0] shadow-sm transition-all"; }); resetGame(); };
+
+        window.setMode = async (mode) => {
+            initAudio(); playSFX('click');
+            if (currentRoomId) { try { const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId); await deleteDoc(roomRef); } catch(e) {} }
+            if (unsubscribeRoom) unsubscribeRoom(); if (unsubscribeChat) unsubscribeChat();
+            resetScores(); gameMode = mode; currentRoomId = null; mySymbol = null;
+            ['pvp', 'pve', 'online'].forEach(m => { const b = document.getElementById('btn' + m.charAt(0).toUpperCase() + m.slice(1)); b.className = (m === mode) ? "mode-tab active" : "mode-tab"; });
+            aiLevelContainer.classList.toggle('hidden', mode !== 'pve'); onlineLobby.classList.toggle('hidden', mode !== 'online');
+            document.getElementById('searchingOverlay').classList.add('hidden');
+            boardElement.parentElement.parentElement.classList.toggle('hidden', mode === 'online'); document.getElementById('statusControlArea').classList.toggle('hidden', mode === 'online');
+            onlineRoomBadge.classList.add('hidden'); gridSelectorContainer.classList.remove('hidden'); document.getElementById('chatPanel').classList.remove('open');
+            updateProfileUI(); resetGame();
+        };
+
+        async function handleCellClick(e) {
+            initAudio(); const index = parseInt(e.currentTarget.dataset.index);
+            if (board[index] !== '' || !gameActive) return; playSFX('click');
+            if (gameMode === 'online') {
+                if (mySymbol !== currentPlayer || !currentRoomId) return;
+                const nb = [...board]; nb[index] = mySymbol; const wd = checkWinCondition(nb, gridSize);
+                let newScores = { ...scores }; if (wd) { if (wd.winner === 'X') newScores.X++; else if (wd.winner === 'O') newScores.O++; else if (wd.winner === 'draw') newScores.draw++; }
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: nb, currentPlayer: mySymbol === 'X' ? 'O' : 'X', winner: wd ? wd.winner : null, winningLine: wd ? wd.line : null, status: wd ? 'finished' : 'playing', scores: newScores });
+            } else { makeMove(index); if (gameActive && gameMode === 'pve' && currentPlayer === 'O') setTimeout(aiMove, 600); }
+        }
+
+        // --- STATS LOGIC ---
+        async function incrementGlobalStat(type) {
+            if (!userId) return;
+            const update = { totalPlayed: increment(1) };
+            userProfile.totalPlayed = (userProfile.totalPlayed || 0) + 1;
+
+            if (type === 'win') { update.totalWins = increment(1); userProfile.totalWins++; }
+            if (type === 'loss') { update.totalLosses = increment(1); userProfile.totalLosses++; }
+            if (type === 'draw') { update.totalDraws = increment(1); userProfile.totalDraws++; }
+            
+            await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), update);
+            if (type === 'win') await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', userId), { totalWins: increment(1) });
+            
+            checkAchievements();
+            updateProfileUI();
+        }
+
+        async function checkAchievements() {
+            if (!userId) return;
+            const newlyUnlocked = [];
+            ACHIEVEMENTS.forEach(ach => {
+                if (userProfile.unlockedAchievements?.includes(ach.id)) return;
+                const currentVal = userProfile[ach.type] || 0;
+                if (currentVal >= ach.goal) newlyUnlocked.push(ach.id);
+            });
+
+            if (newlyUnlocked.length > 0) {
+                userProfile.unlockedAchievements = [...(userProfile.unlockedAchievements || []), ...newlyUnlocked];
+                await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'profile', 'data'), { unlockedAchievements: userProfile.unlockedAchievements });
+                const toast = document.getElementById('toast');
+                toast.innerText = `UNLOCK: ${newlyUnlocked.length} PENCAPAIAN!`;
+                toast.style.opacity = '1';
+                setTimeout(() => toast.style.opacity = '0', 3000);
+            }
+        }
+
+        function makeMove(index) {
+            board[index] = currentPlayer; const cell = boardElement.children[index]; cell.innerText = currentPlayer; cell.classList.add(currentPlayer === 'X' ? 'x-mark' : 'o-mark');
+            const wd = checkWinCondition(board, gridSize);
+            if (wd) { 
+                if (wd.winner !== 'draw') { 
+                    drawWinningLine(wd.line); scores[currentPlayer]++; playSFX('win'); 
+                    if (currentPlayer === 'X') incrementGlobalStat('win'); else incrementGlobalStat('loss');
+                } else { 
+                    scores.draw++; playSFX('draw'); 
+                    incrementGlobalStat('draw');
+                } 
+                updateScoreBoard(); 
+                setTimeout(() => showModal(wd.winner === 'draw' ? "HASIL SERI" : `PEMAIN ${currentPlayer} MENANG`, "Selesai."), 300); 
+                gameActive = false; 
+            } else { 
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateTurnUI(); 
+            }
+        }
+
+        window.changeDifficulty = (l) => { initAudio(); playSFX('click'); aiDifficulty = l; ['easy', 'medium', 'hard'].forEach(v => { const b = document.getElementById('diff' + v.charAt(0).toUpperCase() + v.slice(1)); const col = { easy: 'bg-[#1e8e3e]', medium: 'bg-[#f9ab00]', hard: 'bg-[#d93025]' }; b.className = (v === l) ? `px-3 py-1.5 rounded-full text-[10px] font-bold ${col[v]} text-white transition-all uppercase shadow-sm` : "px-3 py-1.5 rounded-full text-[10px] font-bold bg-[#ffffff] text-[#444746] border border-[#e0e0e0] transition-all uppercase shadow-sm"; }); resetGame(); };
+        function aiMove() { if (!gameActive) return; let m = (aiDifficulty === 'easy') ? getRandomMove() : (getWinningMove('O') || getWinningMove('X') || (aiDifficulty === 'hard' ? getStrategicMove() : null) || getRandomMove()); if (m !== null) makeMove(m); }
+        function getRandomMove() { const m = board.map((v, i) => v === '' ? i : null).filter(v => v !== null); return m.length > 0 ? m[Math.floor(Math.random() * m.length)] : null; }
+        function getWinningMove(p) { for (let i = 0; i < board.length; i++) { if (board[i] === '') { const tb = [...board]; tb[i] = p; if (checkWinCondition(tb, gridSize)?.winner === p) return i; } } return null; }
+        function getStrategicMove() { const c = Math.floor(board.length / 2); if (board[c] === '') return c; const corners = [0, gridSize-1, board.length-gridSize, board.length-1].filter(i => board[i] === ''); return corners.length > 0 ? corners[Math.floor(Math.random() * corners.length)] : null; }
+
+        function updateTurnUI() { 
+            let activeName = currentPlayer === 'X' ? formatName(document.getElementById('labelX').innerText, true) : formatName(document.getElementById('labelO').innerText, true); 
+            currentPlayerText.innerHTML = activeName; 
+            document.getElementById('turnPulse').className = `w-2 h-2 rounded-full animate-pulse ${currentPlayer === 'X' ? 'bg-[#d93025]' : 'bg-[#1a73e8]'}`; 
+            document.getElementById('boxX').style.borderColor = currentPlayer === 'X' ? '#d93025' : 'transparent'; 
+            document.getElementById('boxO').style.borderColor = currentPlayer === 'O' ? '#1a73e8' : 'transparent'; 
+        }
+        function updateScoreBoard() { scoreXElement.innerText = scores.X; scoreOElement.innerText = scores.O; scoreDrawElement.innerText = scores.draw; }
+        function showModal(msg, submsg) { winnerText.innerText = msg; document.getElementById('winnerSubtext').innerText = submsg; statusModal.classList.replace('hidden', 'flex'); setTimeout(() => document.getElementById('modalContent').classList.replace('scale-90', 'scale-100'), 10); }
+        window.closeModal = () => { document.getElementById('modalContent').classList.replace('scale-100', 'scale-90'); setTimeout(() => statusModal.classList.replace('flex', 'hidden'), 200); };
+        window.handlePlayAgain = async () => { playSFX('click'); closeModal(); if (gameMode === 'online' && currentRoomId) { onlineWinCounted = false; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: Array(gridSize * gridSize).fill(''), currentPlayer: 'X', winner: null, winningLine: null, status: 'playing' }); } else resetGame(); };
+        window.requestReset = () => { initAudio(); playSFX('click'); document.getElementById('resetConfirmModal').classList.replace('hidden', 'flex'); setTimeout(() => document.getElementById('resetModalContent').classList.replace('scale-90', 'scale-100'), 10); };
+        window.closeResetModal = () => { document.getElementById('resetModalContent').classList.replace('scale-100', 'scale-90'); setTimeout(() => document.getElementById('resetConfirmModal').classList.replace('flex', 'hidden'), 200); };
+        window.confirmReset = async () => { closeResetModal(); if (gameMode === 'online' && currentRoomId) { onlineWinCounted = false; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { board: Array(gridSize * gridSize).fill(''), currentPlayer: 'X', winner: null, winningLine: null, status: 'playing' }); } else resetGame(); };
+        window.resetGame = () => { board = Array(gridSize * gridSize).fill(''); currentPlayer = 'X'; gameActive = true; onlineWinCounted = false; updateTurnUI(); initBoard(); };
+        window.resetScores = () => { scores = { X: 0, O: 0, draw: 0 }; updateScoreBoard(); resetGame(); };
+
+        // --- ONLINE ---
+        window.createNewRoom = async () => {
+            initAudio(); playSFX('click'); if (!userId) return;
+            const rid = Math.random().toString(36).substring(2, 8).toUpperCase(); currentRoomId = rid; mySymbol = 'X';
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { board: Array(gridSize * gridSize).fill(''), gridSize, currentPlayer: 'X', players: { X: userId, O: null }, playerData: { X: { name: userProfile.name, avatar: userProfile.avatar }, O: null }, status: 'waiting', winner: null, winningLine: null, scores: { X: 0, O: 0, draw: 0 } });
+            gridSelectorContainer.classList.add('hidden'); startRoomListener(rid);
+        };
+
+        window.joinRoom = async () => {
+            initAudio(); playSFX('click'); const rid = document.getElementById('roomInput').value.trim().toUpperCase(); if (!rid || !userId) return;
+            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid)); 
+            if (!snap.exists()) return showErrorModal("ERROR", "Room ID tidak ditemukan!");
+            const data = snap.data(); if (data.players.O && data.players.O !== userId) return showErrorModal("PENUH", "Room ini sudah penuh!");
+            if (!data.players.O && data.players.X !== userId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { "players.O": userId, "playerData.O": { name: userProfile.name, avatar: userProfile.avatar }, status: 'playing' });
+            currentRoomId = rid; mySymbol = data.players.X === userId ? 'X' : 'O'; gridSelectorContainer.classList.add('hidden'); startRoomListener(rid);
+        };
+
+        window.startGlobalMatchmaking = async () => {
+            initAudio(); playSFX('click'); if (!userId) return;
+            onlineLobby.classList.add('hidden'); document.getElementById('searchingOverlay').classList.remove('hidden');
+            const qMatch = query(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), where('status', '==', 'waiting'), where('isGlobal', '==', true), limit(1));
+            const qSnap = await getDocs(qMatch);
+            if (!qSnap.empty) {
+                const rDoc = qSnap.docs[0]; const rid = rDoc.id; const data = rDoc.data();
+                if (data.players.X !== userId) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { "players.O": userId, "playerData.O": { name: userProfile.name, avatar: userProfile.avatar }, status: 'playing' });
+                    currentRoomId = rid; mySymbol = 'O'; document.getElementById('searchingOverlay').classList.add('hidden'); startRoomListener(rid);
+                } else { currentRoomId = rid; mySymbol = 'X'; startRoomListener(rid); }
+            } else {
+                const rid = "GLB-" + Math.random().toString(36).substring(2, 6).toUpperCase(); currentRoomId = rid; mySymbol = 'X';
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), { board: Array(gridSize * gridSize).fill(''), gridSize, currentPlayer: 'X', players: { X: userId, O: null }, playerData: { X: { name: userProfile.name, avatar: userProfile.avatar }, O: null }, status: 'waiting', winner: null, winningLine: null, scores: { X: 0, O: 0, draw: 0 }, isGlobal: true });
+                startRoomListener(rid);
+            }
+        };
+
+        window.cancelMatchmaking = async () => { if (currentRoomId) { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId)); } catch(e) {} } setMode('online'); };
+
+        function startRoomListener(rid) {
+            onlineLobby.classList.add('hidden'); document.getElementById('searchingOverlay').classList.add('hidden');
+            boardElement.parentElement.parentElement.classList.remove('hidden'); document.getElementById('statusControlArea').classList.remove('hidden'); onlineRoomBadge.classList.remove('hidden');
+            document.getElementById('displayRoomId').innerText = rid;
+            unsubscribeRoom = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', rid), (snap) => {
+                if (!snap.exists()) { if (currentRoomId) { currentRoomId = null; showErrorModal("BUBAR", "Lawan meninggalkan room."); setMode('online'); } return; }
+                const data = snap.data(); if (data.isGlobal && data.status === 'waiting') { document.getElementById('searchingOverlay').classList.remove('hidden'); boardElement.parentElement.parentElement.classList.add('hidden'); document.getElementById('statusControlArea').classList.add('hidden'); } else { document.getElementById('searchingOverlay').classList.add('hidden'); boardElement.parentElement.parentElement.classList.remove('hidden'); document.getElementById('statusControlArea').classList.remove('hidden'); }
+                board = data.board; gridSize = data.gridSize; currentPlayer = data.currentPlayer; gameActive = data.status !== 'finished'; if (data.scores) scores = data.scores;
+                const pX = data.playerData.X || { name: 'X', avatar: null }; const pO = data.playerData.O || { name: 'Menunggu...', avatar: null };
+                document.getElementById('labelX').innerHTML = formatName(pX.name, false); updateAvatarDisplay('X', pX.avatar);
+                document.getElementById('labelO').innerHTML = formatName(pO.name, false); updateAvatarDisplay('O', pO.avatar);
+                updateScoreBoard(); initBoard(); updateTurnUI();
+                if (data.status === 'finished') {
+                    if (data.winner && data.winner !== 'draw') { drawWinningLine(data.winningLine); playSFX('win'); } else playSFX('draw');
+                    showModal(data.winner === 'draw' ? "HASIL SERI" : (data.winner === mySymbol ? "ANDA MENANG!" : "ANDA KALAH!"), "Selesai.");
+                    if (!onlineWinCounted) {
+                        onlineWinCounted = true;
+                        if (data.winner === 'draw') incrementGlobalStat('draw');
+                        else if (data.winner === mySymbol) incrementGlobalStat('win');
+                        else incrementGlobalStat('loss');
+                    }
+                } else if (data.status === 'playing') closeModal();
+            });
+            unsubscribeChat = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', rid, 'messages'), (snap) => {
+                const msgs = []; snap.forEach(d => msgs.push(d.data())); msgs.sort((a,b) => a.timestamp - b.timestamp); renderChat(msgs);
+                if (!document.getElementById('chatPanel').classList.contains('open') && msgs.length > 0) document.getElementById('chatDot').classList.remove('hidden');
+            });
+        }
+
+        function renderChat(msgs) {
+            const container = document.getElementById('chatMessages'); container.innerHTML = '';
+            msgs.forEach(m => {
+                const isMe = m.senderId === userId; const bubble = document.createElement('div'); bubble.className = `chat-bubble ${isMe ? 'chat-me' : 'chat-them'}`;
+                const sender = document.createElement('div'); sender.className = 'chat-sender'; 
+                sender.innerHTML = formatName(m.senderName || 'User', true);
+                const txt = document.createElement('div'); txt.innerText = m.text;
+                if (!isMe) bubble.appendChild(sender); bubble.appendChild(txt); container.appendChild(bubble);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        window.sendChatMessage = async () => {
+            const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text || !currentRoomId) return; input.value = '';
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId, 'messages'), { text, senderId: userId, senderName: userProfile.name, timestamp: Date.now() });
+        };
+        window.toggleChat = () => { const panel = document.getElementById('chatPanel'); const isOpen = panel.classList.toggle('open'); if (isOpen) document.getElementById('chatDot').classList.add('hidden'); playSFX('click'); };
+        window.copyRoomId = () => { playSFX('click'); const t = document.getElementById('displayRoomId').innerText, el = document.createElement('textarea'); el.value = t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); const toast = document.getElementById('toast'); toast.style.opacity = '1'; setTimeout(() => toast.style.opacity = '0', 2000); };
+        
+        window.onload = () => { initBoard(); updateTurnUI(); updateScoreBoard(); };
+        window.addEventListener('click', () => { if (!audioCtx) initAudio(); }, { once: true });
+        document.getElementById('chatInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
+    </script>
+</body>
+</html>
+
