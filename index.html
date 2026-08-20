@@ -13,35 +13,28 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.FirebaseModule = {
             initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged,
-            getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, where, getDocs, deleteDoc
+            getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, getDocs
         };
     </script>
 
     <style>
         :root {
-            /* Warna khas Google */
             --google-blue: #4285F4;
             --google-blue-dark: #2B6CB0;
-            --google-red: #EA4335;
             --google-yellow: #FBBC05;
             --google-yellow-dark: #D9A000;
             --google-green: #34A853;
-            
-            /* Background & Surface */
             --bg-color: #F8F9FA;
             --tile-bg: #E8EAED;
             --tile-shadow: #DADCE0;
             --text-dark: #202124;
             --text-sub: #5F6368;
-            
-            /* 3D Gray Button Surface */
             --3d-gray-bg: #BDC1C6;
             --3d-gray-shadow: #9AA0A6;
-            
             --radius-round: 999px;
             --radius-card: 24px;
         }
@@ -83,7 +76,6 @@
             gap: 10px;
         }
 
-        /* ===== 1. HEADER UTAMA ===== */
         .top-header {
             width: 100%;
             display: flex;
@@ -107,7 +99,6 @@
             gap: 8px;
         }
 
-        /* Tombol Header Dengan Desain 3D Ala Kotak Seri */
         .btn-header-3d {
             background-color: var(--3d-gray-bg);
             box-shadow: inset 0 -4px 0 var(--3d-gray-shadow);
@@ -134,21 +125,19 @@
             fill: #202124;
         }
 
-        /* Banner Status Online */
+        /* Badge Online Tanpa Latar dan Tanpa Border */
         .online-status-badge {
-            font-size: 0.68rem;
+            font-size: 0.72rem;
             font-weight: 800;
-            padding: 4px 12px;
-            border-radius: var(--radius-round);
-            background-color: #E8F0FE;
             color: var(--google-blue);
-            border: 1px solid #D2E3FC;
+            background: transparent;
+            border: none;
             display: none;
             text-align: center;
             width: 100%;
+            letter-spacing: 0.5px;
         }
 
-        /* ===== 2. PAPAN PERMAINAN ===== */
         .board-container {
             width: 100%;
             display: flex;
@@ -197,7 +186,6 @@
             box-shadow: inset 0 -4px 0 #D2E3FC;
         }
 
-        /* ===== 3. AREA BAWAH ===== */
         .bottom-section {
             width: 100%;
             display: flex;
@@ -236,7 +224,6 @@
             text-transform: uppercase;
         }
 
-        /* Board Skor 3 Kolom */
         .scoreboard {
             width: 100%;
             display: grid;
@@ -287,7 +274,6 @@
             font-weight: 900;
         }
 
-        /* ===== 4. POPUP MODAL TERPISAH ===== */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -390,7 +376,6 @@
             box-shadow: 0 2px 6px rgba(66, 133, 244, 0.3);
         }
 
-        /* Input Kode Room Online */
         .room-input-box {
             display: flex;
             gap: 6px;
@@ -425,6 +410,7 @@
             font-weight: 800;
             font-size: 0.75rem;
             cursor: pointer;
+            white-space: nowrap;
         }
 
         .btn-save {
@@ -439,13 +425,16 @@
             box-shadow: 0 3px 8px rgba(66, 133, 244, 0.35);
             margin-top: 4px;
             transition: background-color 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn-save:active {
             background-color: var(--google-blue-dark);
         }
 
-        /* ===== LEADERBOARD STYLING ===== */
         .leaderboard-list {
             display: flex;
             flex-direction: column;
@@ -516,7 +505,6 @@
             display: none !important;
         }
 
-        /* Responsive Layout untuk Layar Kecil */
         @media (max-height: 600px) {
             body { padding: 8px 12px; }
             .container { gap: 8px; }
@@ -530,30 +518,29 @@
 <body>
 
     <div class="container">
-        <!-- 1. Header Atas -->
+        <!-- Header Atas -->
         <div class="top-header">
             <div class="logo-box">
                 <span style="color: var(--google-blue);">X</span>
                 <span style="color: var(--google-yellow);">O</span>
             </div>
 
-            <!-- Action Buttons Header (3D) -->
             <div class="header-actions">
-                <!-- Tombol Papan Peringkat (Tropi 3D) -->
+                <!-- Tombol Peringkat: Ikon Piala Modern SVG -->
                 <button class="btn-header-3d" onclick="openLeaderboardModal()" title="Peringkat Global">
                     <svg viewBox="0 0 24 24">
-                        <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V18H8v2h8v-2h-3v-2.1c2.12-.39 3.75-1.93 4.39-4.04C19.08 11.63 21 9.55 21 7V6c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                        <path d="M18 2H6c-1.1 0-2 .9-2 2v2c0 2.21 1.79 4 4 4 .59 0 1.14-.13 1.64-.37C10.42 10.99 11.66 12 13 12h-1c-2.76 0-5 2.24-5 5v2H5c-.55 0-1 .45-1 1s.45 1 1 1h14c.55 0 1-.45 1-1s-.45-1-1-1h-2v-2c0-2.76-2.24-5-5-5h-1c1.34 0 2.58-1.01 3.36-2.37.5.24 1.05.37 1.64.37 2.21 0 4-1.79 4-4V4c0-1.1-.9-2-2-2zm0 6c0 1.1-.9 2-2 2s-2-.9-2-2V4h4v4zM8 4h4v4c0 1.1-.9 2-2 2s-2-.9-2-2V4z"/>
                     </svg>
                 </button>
 
-                <!-- Tombol Pengaturan (Gir 3D) -->
+                <!-- Tombol Pengaturan: Ikon Gir/Pengaturan Detail SVG -->
                 <button class="btn-header-3d" onclick="openSettingsModal()" title="Pengaturan">
                     <svg viewBox="0 0 24 24">
-                        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.38-2.65C13.43 2.17 13.2 2 12.95 2h-4c-.25 0-.48.17-.51.42l-.38 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L3.5 10.5c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.06.74 1.69.99l.38 2.65c.03.24.26.42.51.42h4c.25 0 .48-.18.51-.42l.38-2.65c.63-.25 1.17-.59 1.69-.99l2.49 1c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/>
+                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
                     </svg>
                 </button>
 
-                <!-- Tombol Restart Game (3D) -->
+                <!-- Tombol Restart Game: Ikon Putar Ulang SVG -->
                 <button class="btn-header-3d" onclick="resetGame()" title="Ulangi Game">
                     <svg viewBox="0 0 24 24">
                         <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -562,17 +549,15 @@
             </div>
         </div>
 
-        <!-- Banner Informasi Mode Online -->
+        <!-- Badge Online Tanpa Latar dan Tanpa Border -->
         <div id="onlineBadge" class="online-status-badge">
             ONLINE: ROOM <span id="onlineRoomCode">GLOBAL</span>
         </div>
 
-        <!-- 2. Papan Permainan -->
         <div class="board-container">
             <div class="board" id="board"></div>
         </div>
 
-        <!-- 3. Area Bawah -->
         <div class="bottom-section">
             <div class="turn-box-container">
                 <div class="turn-card">
@@ -597,20 +582,18 @@
         </div>
     </div>
 
-    <!-- ===== 4A. MODAL POPUP PENGATURAN ===== -->
+    <!-- Modal Pengaturan -->
     <div class="modal-overlay" id="settingsModalOverlay" onclick="handleOverlayClick(event, 'settings')">
         <div class="modal-card">
             <div class="modal-header">
                 <span class="modal-title">Pengaturan Game</span>
             </div>
 
-            <!-- Nama Pemain -->
             <div class="setting-section username-input-box">
                 <span class="setting-label">Nama Kamu</span>
                 <input type="text" id="inputUsername" class="room-input" style="text-align:left; font-size:0.8rem; letter-spacing:0;" placeholder="Player123" maxlength="12">
             </div>
 
-            <!-- 1. Pilihan Grid -->
             <div class="setting-section">
                 <span class="setting-label">Ukuran Papan</span>
                 <div class="option-group" id="gridGroup">
@@ -620,7 +603,6 @@
                 </div>
             </div>
 
-            <!-- 2. Pilihan Mode Lawan -->
             <div class="setting-section">
                 <span class="setting-label">Mode Permainan</span>
                 <div class="option-group" id="modeGroup">
@@ -631,16 +613,18 @@
                 </div>
             </div>
 
-            <!-- Input Kode Room Online -->
             <div class="setting-section hidden" id="roomSection">
-                <span class="setting-label">Kode Room Jarak Jauh</span>
+                <span class="setting-label">Room Jarak Jauh</span>
                 <div class="room-input-box">
                     <input type="text" id="inputRoomCode" class="room-input" placeholder="KODE" maxlength="6">
                     <button class="btn-room-action" onclick="joinOrCreateRoom()">Masuk</button>
                 </div>
+                <button class="btn-save" style="background-color: var(--google-green); margin-top: 4px; font-size: 0.75rem; padding: 8px;" onclick="generateRandomRoomCode()">
+                    <svg style="width:16px; height:16px; fill:#FFFFFF;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM7.5 18c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-9C6.67 9 6 8.33 6 7.5S6.67 6 7.5 6 9 6.67 9 7.5 8.33 9 7.5 9zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-9c-.83 0-1.5-.67-1.5-1.5S15.67 6 16.5 6s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                    Buat Kode Room Baru
+                </button>
             </div>
 
-            <!-- 3. Pilihan Kesulitan AI -->
             <div class="setting-section" id="difficultySection">
                 <span class="setting-label">Tingkat Kesulitan AI</span>
                 <div class="option-group" id="difficultyGroup">
@@ -654,7 +638,7 @@
         </div>
     </div>
 
-    <!-- ===== 4B. MODAL POPUP PAPAN PERINGKAT ===== -->
+    <!-- Modal Papan Peringkat -->
     <div class="modal-overlay" id="leaderboardModalOverlay" onclick="handleOverlayClick(event, 'leaderboard')">
         <div class="modal-card">
             <div class="modal-header">
@@ -670,7 +654,6 @@
     </div>
 
     <script>
-        // Audio Synthesizer
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
@@ -729,7 +712,6 @@
             } catch (e) {}
         }
 
-        // Simbol SVG X dan O
         const svgX = `
             <svg class="icon" viewBox="0 0 40 40">
                 <path d="M 8,8 L 32,32 M 32,8 L 8,32" stroke="#4285F4" stroke-width="7" stroke-linecap="round" />
@@ -742,7 +724,6 @@
             </svg>
         `;
 
-        // Modals Controls Terpisah
         const settingsModalOverlay = document.getElementById('settingsModalOverlay');
         const leaderboardModalOverlay = document.getElementById('leaderboardModalOverlay');
 
@@ -776,13 +757,14 @@
             closeSettingsModal();
             if (gameMode === 'global') {
                 findGlobalMatch();
-            } else if (gameMode !== 'room') {
+            } else if (gameMode === 'room') {
+                joinOrCreateRoom();
+            } else {
                 leaveOnlineRoom();
                 resetGame();
             }
         }
 
-        // Configurations & State
         let gridSize = 3;
         let winCondition = 3;
         let gameMode = 'ai';
@@ -794,7 +776,6 @@
         let winningCombinations = [];
         let scores = { X: 0, O: 0, draw: 0 };
 
-        // Firebase State
         let db = null;
         let auth = null;
         let user = null;
@@ -803,7 +784,6 @@
         let roomUnsubscribe = null;
         let username = 'Pemain_' + Math.floor(100 + Math.random() * 900);
 
-        // DOM Handles
         const boardEl = document.getElementById('board');
         const turnText = document.getElementById('turnText');
         const scoreXEl = document.getElementById('scoreX');
@@ -816,9 +796,9 @@
         const onlineBadge = document.getElementById('onlineBadge');
         const onlineRoomCode = document.getElementById('onlineRoomCode');
         const inputUsername = document.getElementById('inputUsername');
+        const inputRoomCode = document.getElementById('inputRoomCode');
         const leaderboardList = document.getElementById('leaderboardList');
 
-        // Init Firebase
         window.addEventListener('DOMContentLoaded', async () => {
             inputUsername.value = username;
 
@@ -847,7 +827,15 @@
             if (val) username = val;
         }
 
-        // Selection Handlers
+        function generateRandomRoomCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 5; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            inputRoomCode.value = result;
+        }
+
         function setGrid(size) {
             gridSize = size;
             winCondition = size === 3 ? 3 : 4;
@@ -875,6 +863,7 @@
             } else if (mode === 'room') {
                 difficultySection.classList.add('hidden');
                 roomSection.classList.remove('hidden');
+                if (!inputRoomCode.value) generateRandomRoomCode();
             }
 
             resetScore();
@@ -1049,7 +1038,6 @@
             scoreDrawEl.innerText = '0';
         }
 
-        // ===== MULTIPLAYER ONLINE & LEADERBOARD (FIREBASE) =====
         function leaveOnlineRoom() {
             if (roomUnsubscribe) {
                 roomUnsubscribe();
@@ -1121,8 +1109,10 @@
 
         async function joinOrCreateRoom() {
             if (!user || !db) return;
-            const roomCode = document.getElementById('inputRoomCode').value.trim().toUpperCase();
-            if (!roomCode) return;
+            const roomCode = inputRoomCode.value.trim().toUpperCase();
+            if (!roomCode) {
+                return;
+            }
 
             leaveOnlineRoom();
             closeSettingsModal();
@@ -1204,7 +1194,7 @@
                 gameActive = data.status === 'playing' || data.status === 'waiting';
 
                 if (data.status === 'waiting') {
-                    turnText.innerText = 'MENUNGGU...';
+                    turnText.innerText = 'MENUNGGU LAWAN...';
                 } else if (data.status === 'playing') {
                     updateStatus();
                 }
@@ -1318,7 +1308,6 @@
             leaderboardList.innerHTML = html;
         }
 
-        // AI Logic
         function makeAIMove() {
             if (!gameActive) return;
             let moveIndex;
@@ -1348,7 +1337,7 @@
                     boardState[i] = 'O';
                     if (checkWinningState('O')) {
                         boardState[i] = '';
-                        return i;
+                        return;
                     }
                     boardState[i] = '';
                 }
@@ -1410,7 +1399,6 @@
             return score;
         }
 
-        // Init
         generateWinningCombinations();
         resetGame();
     </script>
