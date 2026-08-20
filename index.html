@@ -13,11 +13,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         window.FirebaseModule = {
             initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged,
-            getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, getDocs
+            getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, query, getDocs, arrayUnion
         };
     </script>
 
@@ -29,12 +29,12 @@
             --google-yellow-dark: #D9A000;
             --google-green: #34A853;
             --bg-color: #F8F9FA;
-            --tile-bg: #E8EAED;
-            --tile-shadow: #DADCE0;
+            --tile-bg: #FFFFFF;
+            --tile-border: #E8EAED;
             --text-dark: #202124;
             --text-sub: #5F6368;
-            --3d-gray-bg: #BDC1C6;
-            --3d-gray-shadow: #9AA0A6;
+            --flat-gray-bg: #F1F3F4;
+            --flat-gray-hover: #E8EAED;
             --radius-round: 999px;
             --radius-card: 24px;
         }
@@ -99,10 +99,9 @@
             gap: 8px;
         }
 
-        .btn-header-3d {
-            background-color: var(--3d-gray-bg);
-            box-shadow: inset 0 -4px 0 var(--3d-gray-shadow);
-            border: none;
+        .btn-header-flat {
+            background-color: var(--flat-gray-bg);
+            border: 1px solid var(--tile-border);
             width: 42px;
             height: 42px;
             border-radius: 14px;
@@ -110,19 +109,18 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.08s ease;
+            transition: background-color 0.15s ease;
+            position: relative;
         }
 
-        .btn-header-3d:active {
-            transform: translateY(2px);
-            box-shadow: inset 0 -2px 0 var(--3d-gray-shadow);
-            background-color: #B0B4B9;
+        .btn-header-flat:active {
+            background-color: var(--flat-gray-hover);
         }
 
-        .btn-header-3d svg {
+        .btn-header-flat img {
             width: 22px;
             height: 22px;
-            fill: #202124;
+            object-fit: contain;
         }
 
         .online-status-badge {
@@ -158,8 +156,8 @@
 
         .cell {
             background-color: var(--tile-bg);
-            box-shadow: inset 0 -4px 0 var(--tile-shadow);
-            border-radius: 14px;
+            border: 1px solid var(--tile-border);
+            border-radius: 16px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -170,7 +168,7 @@
         }
 
         .cell:active:not(.occupied) {
-            background-color: #D2D6DC;
+            background-color: var(--flat-gray-bg);
         }
 
         .cell.occupied {
@@ -185,7 +183,7 @@
 
         .cell.winning-cell {
             background-color: #E8F0FE;
-            box-shadow: inset 0 -4px 0 #D2E3FC;
+            border-color: #D2E3FC;
         }
 
         .bottom-section {
@@ -204,9 +202,9 @@
         }
 
         .turn-card {
-            background-color: var(--3d-gray-bg);
+            background-color: var(--flat-gray-bg);
             color: #202124;
-            box-shadow: inset 0 -4px 0 var(--3d-gray-shadow);
+            border: 1px solid var(--tile-border);
             border-radius: 18px;
             padding: 8px 16px;
             display: flex;
@@ -247,24 +245,23 @@
             text-align: center;
             user-select: none;
             overflow: hidden;
+            border: 1px solid transparent;
         }
 
         .score-card.x-card {
             background-color: var(--google-blue);
             color: #FFFFFF;
-            box-shadow: inset 0 -4px 0 var(--google-blue-dark);
         }
 
         .score-card.ties-card {
-            background-color: var(--3d-gray-bg);
+            background-color: var(--flat-gray-bg);
             color: #202124;
-            box-shadow: inset 0 -4px 0 var(--3d-gray-shadow);
+            border-color: var(--tile-border);
         }
 
         .score-card.o-card {
             background-color: var(--google-yellow);
             color: #202124;
-            box-shadow: inset 0 -4px 0 var(--google-yellow-dark);
         }
 
         .score-title {
@@ -290,8 +287,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(32, 33, 36, 0.5);
-            backdrop-filter: blur(4px);
+            background-color: rgba(32, 33, 36, 0.6);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -312,7 +308,7 @@
             width: 100%;
             max-width: 320px;
             border-radius: var(--radius-card);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
             padding: 16px;
             display: flex;
             flex-direction: column;
@@ -510,6 +506,87 @@
             flex-shrink: 0;
         }
 
+        /* Chat Styles */
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 4px;
+            background: #F8F9FA;
+            border-radius: 14px;
+            border: 1px solid #E8EAED;
+        }
+
+        .chat-bubble {
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            max-width: 85%;
+            word-break: break-word;
+        }
+
+        .chat-bubble.mine {
+            background-color: #E8F0FE;
+            color: #174EA6;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-bubble.theirs {
+            background-color: #FFFFFF;
+            color: #202124;
+            align-self: flex-start;
+            border: 1px solid #E8EAED;
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-sender {
+            font-size: 0.65rem;
+            font-weight: 800;
+            margin-bottom: 2px;
+            opacity: 0.8;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 9px 12px;
+            border: 1px solid #DADCE0;
+            border-radius: var(--radius-round);
+            font-size: 0.8rem;
+            outline: none;
+            background: #F8F9FA;
+        }
+
+        .chat-input:focus {
+            border-color: var(--google-blue);
+            background: #FFFFFF;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            background-color: #EA4335;
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 800;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
         .username-input-box {
             display: flex;
             flex-direction: column;
@@ -527,7 +604,7 @@
             .board { width: min(70vw, 240px); height: min(70vw, 240px); grid-gap: 6px; }
             .score-card { padding: 6px 2px; }
             .score-num { font-size: 1.05rem; }
-            .btn-header-3d { width: 36px; height: 36px; }
+            .btn-header-flat { width: 36px; height: 36px; }
         }
     </style>
 </head>
@@ -542,25 +619,25 @@
             </div>
 
             <div class="header-actions">
-                <!-- Tombol Peringkat -->
-                <button class="btn-header-3d" onclick="openLeaderboardModal()" title="Peringkat Global">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 10.63 21 8.55 21 6V5zm-14 3V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
-                    </svg>
+                <!-- Tombol Chat: CHAT.PNG -->
+                <button class="btn-header-flat hidden" id="btnChatToggle" onclick="openChatModal()" title="Obrolan">
+                    <img src="CHAT.PNG" alt="Chat" onerror="this.style.display='none'">
+                    <span id="chatBadge" class="notification-badge hidden">0</span>
                 </button>
 
-                <!-- Tombol Pengaturan -->
-                <button class="btn-header-3d" onclick="openSettingsModal()" title="Pengaturan">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
-                    </svg>
+                <!-- Tombol Peringkat: PIALA.PNG -->
+                <button class="btn-header-flat" onclick="openLeaderboardModal()" title="Peringkat Global">
+                    <img src="PIALA.PNG" alt="Piala" onerror="this.style.display='none'">
                 </button>
 
-                <!-- Tombol Restart Game -->
-                <button class="btn-header-3d" onclick="resetGame()" title="Ulangi Game">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                    </svg>
+                <!-- Tombol Pengaturan: GEAR.PNG -->
+                <button class="btn-header-flat" onclick="openSettingsModal()" title="Pengaturan">
+                    <img src="GEAR.PNG" alt="Pengaturan" onerror="this.style.display='none'">
+                </button>
+
+                <!-- Tombol Restart Game: MUATULANG.PNG -->
+                <button class="btn-header-flat" onclick="resetGame()" title="Ulangi Game">
+                    <img src="MUATULANG.PNG" alt="Ulangi" onerror="this.style.display='none'">
                 </button>
             </div>
         </div>
@@ -636,7 +713,6 @@
                     <button class="btn-room-action" onclick="joinOrCreateRoom()">Masuk</button>
                 </div>
                 <button class="btn-save" style="background-color: var(--google-green); margin-top: 4px; font-size: 0.72rem; padding: 7px;" onclick="generateRandomRoomCode()">
-                    <svg style="width:14px; height:14px; fill:#FFFFFF;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM7.5 18c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-9C6.67 9 6 8.33 6 7.5S6.67 6 7.5 6 9 6.67 9 7.5 8.33 9 7.5 9zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-9c-.83 0-1.5-.67-1.5-1.5S15.67 6 16.5 6s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
                     Buat Kode Room Baru
                 </button>
             </div>
@@ -669,6 +745,26 @@
         </div>
     </div>
 
+    <!-- Modal Chat Online -->
+    <div class="modal-overlay" id="chatModalOverlay" onclick="handleOverlayClick(event, 'chat')">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title">Obrolan Lawan Main</span>
+            </div>
+
+            <div class="chat-messages" id="chatMessagesList">
+                <div style="text-align:center; font-size:0.75rem; color:var(--text-sub); padding:12px;">Belum ada pesan. Sapa lawanmu!</div>
+            </div>
+
+            <div class="chat-input-row">
+                <input type="text" id="inputChatMessage" class="chat-input" placeholder="Tulis pesan..." maxlength="60" onkeydown="if(event.key==='Enter') sendChatMessage()">
+                <button class="btn-room-action" onclick="sendChatMessage()">Kirim</button>
+            </div>
+
+            <button class="btn-save" style="width:100%; margin-top:6px;" onclick="closeChatModal()">Tutup</button>
+        </div>
+    </div>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBHQ7-xkkXutGiDROuF2XbAfS99w0ywUG4",
@@ -680,6 +776,12 @@
             measurementId: "G-KETZC6HSTJ"
         };
         const appId = "tictactoe-a3ff0";
+
+        let persistentDeviceId = localStorage.getItem('tictactoe_device_id');
+        if (!persistentDeviceId) {
+            persistentDeviceId = 'user_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+            localStorage.setItem('tictactoe_device_id', persistentDeviceId);
+        }
 
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
@@ -753,6 +855,7 @@
 
         const settingsModalOverlay = document.getElementById('settingsModalOverlay');
         const leaderboardModalOverlay = document.getElementById('leaderboardModalOverlay');
+        const chatModalOverlay = document.getElementById('chatModalOverlay');
 
         function openSettingsModal() {
             settingsModalOverlay.classList.add('active');
@@ -771,11 +874,27 @@
             leaderboardModalOverlay.classList.remove('active');
         }
 
+        let unreadChatCount = 0;
+        const chatBadge = document.getElementById('chatBadge');
+
+        function openChatModal() {
+            chatModalOverlay.classList.add('active');
+            unreadChatCount = 0;
+            chatBadge.classList.add('hidden');
+            chatBadge.innerText = '0';
+        }
+
+        function closeChatModal() {
+            chatModalOverlay.classList.remove('active');
+        }
+
         function handleOverlayClick(e, modalType) {
             if (modalType === 'settings' && e.target === settingsModalOverlay) {
                 closeSettingsModal();
             } else if (modalType === 'leaderboard' && e.target === leaderboardModalOverlay) {
                 closeLeaderboardModal();
+            } else if (modalType === 'chat' && e.target === chatModalOverlay) {
+                closeChatModal();
             }
         }
 
@@ -809,7 +928,7 @@
         let currentRoomId = null;
         let myRole = 'X';
         let roomUnsubscribe = null;
-        let username = 'Pemain_' + Math.floor(100 + Math.random() * 900);
+        let username = localStorage.getItem('tictactoe_username') || ('Pemain_' + Math.floor(100 + Math.random() * 900));
 
         const boardEl = document.getElementById('board');
         const turnText = document.getElementById('turnText');
@@ -825,6 +944,9 @@
         const inputUsername = document.getElementById('inputUsername');
         const inputRoomCode = document.getElementById('inputRoomCode');
         const leaderboardList = document.getElementById('leaderboardList');
+        const btnChatToggle = document.getElementById('btnChatToggle');
+        const chatMessagesList = document.getElementById('chatMessagesList');
+        const inputChatMessage = document.getElementById('inputChatMessage');
 
         window.addEventListener('DOMContentLoaded', async () => {
             inputUsername.value = username;
@@ -844,7 +966,10 @@
 
         function saveUsername() {
             const val = inputUsername.value.trim();
-            if (val) username = val;
+            if (val) {
+                username = val;
+                localStorage.setItem('tictactoe_username', username);
+            }
         }
 
         function generateRandomRoomCode() {
@@ -858,7 +983,6 @@
 
         function setGrid(size) {
             gridSize = size;
-            // Papan 3x3 dan 4x4 butuh 3 & 4 berderet. 5x5 wajib 5 berderet penuh!
             winCondition = size === 5 ? 5 : (size === 4 ? 4 : 3);
             updateToggleUI('#gridGroup', event.target);
             generateWinningCombinations();
@@ -1068,15 +1192,17 @@
             }
             currentRoomId = null;
             onlineBadge.style.display = 'none';
+            btnChatToggle.classList.add('hidden');
         }
 
         async function findGlobalMatch() {
-            if (!user || !db) return;
+            if (!db) return;
             leaveOnlineRoom();
 
             onlineBadge.style.display = 'block';
             onlineRoomCode.innerText = 'GLOBAL';
             turnText.innerText = 'Mencari...';
+            btnChatToggle.classList.remove('hidden');
 
             const publicCol = window.FirebaseModule.collection(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms');
             const q = window.FirebaseModule.query(publicCol);
@@ -1085,7 +1211,7 @@
             let openRoom = null;
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
-                if (data.isGlobal && data.status === 'waiting' && data.gridSize === gridSize) {
+                if (data.isGlobal && data.status === 'waiting' && data.gridSize === gridSize && data.playerX !== persistentDeviceId) {
                     openRoom = { id: docSnap.id, ...data };
                 }
             });
@@ -1098,7 +1224,7 @@
 
                 const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
                 await window.FirebaseModule.updateDoc(roomRef, {
-                    playerO: user.uid,
+                    playerO: persistentDeviceId,
                     nameO: username,
                     status: 'playing'
                 });
@@ -1117,13 +1243,14 @@
                     status: 'waiting',
                     gridSize: gridSize,
                     winCondition: winCondition,
-                    playerX: user.uid,
+                    playerX: persistentDeviceId,
                     nameX: username,
                     playerO: null,
                     nameO: null,
                     boardState: Array(gridSize * gridSize).fill(''),
                     currentPlayer: 'X',
-                    winner: null
+                    winner: null,
+                    chats: []
                 });
 
                 subscribeToRoom(currentRoomId);
@@ -1131,7 +1258,7 @@
         }
 
         async function joinOrCreateRoom() {
-            if (!user || !db) return;
+            if (!db) return;
             const roomCode = inputRoomCode.value.trim().toUpperCase();
             if (!roomCode) return;
 
@@ -1142,19 +1269,21 @@
             const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
             const roomSnap = await window.FirebaseModule.getDoc(roomRef);
 
+            btnChatToggle.classList.remove('hidden');
+
             if (roomSnap.exists()) {
                 const data = roomSnap.data();
-                if (!data.playerO && data.playerX !== user.uid) {
+                if (!data.playerO && data.playerX !== persistentDeviceId) {
                     myRole = 'O';
                     titleX.innerText = 'LAWAN (X)';
                     titleO.innerText = 'ANDA (O)';
                     await window.FirebaseModule.updateDoc(roomRef, {
-                        playerO: user.uid,
+                        playerO: persistentDeviceId,
                         nameO: username,
                         status: 'playing'
                     });
                 } else {
-                    myRole = data.playerX === user.uid ? 'X' : 'O';
+                    myRole = data.playerX === persistentDeviceId ? 'X' : 'O';
                     titleX.innerText = myRole === 'X' ? 'ANDA (X)' : 'LAWAN (X)';
                     titleO.innerText = myRole === 'O' ? 'ANDA (O)' : 'LAWAN (O)';
                 }
@@ -1168,13 +1297,14 @@
                     status: 'waiting',
                     gridSize: gridSize,
                     winCondition: winCondition,
-                    playerX: user.uid,
+                    playerX: persistentDeviceId,
                     nameX: username,
                     playerO: null,
                     nameO: null,
                     boardState: Array(gridSize * gridSize).fill(''),
                     currentPlayer: 'X',
-                    winner: null
+                    winner: null,
+                    chats: []
                 });
             }
 
@@ -1183,6 +1313,8 @@
             subscribeToRoom(currentRoomId);
         }
 
+        let lastProcessedChatCount = 0;
+
         function subscribeToRoom(roomId) {
             const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', roomId);
 
@@ -1190,7 +1322,6 @@
                 if (!docSnap.exists()) return;
                 const data = docSnap.data();
 
-                // Cek jika lawan keluar / disconnect saat bermain
                 if (data.status === 'playing' && data.playerX && data.playerO) {
                     if ((myRole === 'X' && !data.playerO) || (myRole === 'O' && !data.playerX)) {
                         handleOpponentDisconnect(data.isGlobal);
@@ -1241,6 +1372,62 @@
                         }
                     }
                 }
+
+                if (data.chats && Array.isArray(data.chats)) {
+                    renderChats(data.chats);
+                    if (data.chats.length > lastProcessedChatCount) {
+                        const latest = data.chats[data.chats.length - 1];
+                        if (latest.senderId !== persistentDeviceId && !chatModalOverlay.classList.contains('active')) {
+                            unreadChatCount++;
+                            chatBadge.innerText = unreadChatCount;
+                            chatBadge.classList.remove('hidden');
+                        }
+                        lastProcessedChatCount = data.chats.length;
+                    }
+                }
+            });
+        }
+
+        function renderChats(chats) {
+            if (chats.length === 0) {
+                chatMessagesList.innerHTML = '<div style="text-align:center; font-size:0.75rem; color:var(--text-sub); padding:12px;">Belum ada pesan. Sapa lawanmu!</div>';
+                return;
+            }
+
+            let html = '';
+            chats.forEach(msg => {
+                const isMine = msg.senderId === persistentDeviceId;
+                const bubbleClass = isMine ? 'mine' : 'theirs';
+                html += `
+                    <div class="chat-bubble ${bubbleClass}">
+                        <div class="chat-sender">${isMine ? 'Kamu' : (msg.senderName || 'Lawan')}</div>
+                        <div>${escapeHtml(msg.text)}</div>
+                    </div>
+                `;
+            });
+            chatMessagesList.innerHTML = html;
+            chatMessagesList.scrollTop = chatMessagesList.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        async function sendChatMessage() {
+            if (!currentRoomId || !db) return;
+            const text = inputChatMessage.value.trim();
+            if (!text) return;
+
+            inputChatMessage.value = '';
+            const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
+            
+            await window.FirebaseModule.updateDoc(roomRef, {
+                chats: window.FirebaseModule.arrayUnion({
+                    senderId: persistentDeviceId,
+                    senderName: username,
+                    text: text,
+                    timestamp: Date.now()
+                })
             });
         }
 
@@ -1297,8 +1484,8 @@
         }
 
         async function recordGlobalWin() {
-            if (!user || !db) return;
-            const userLeaderboardRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', user.uid);
+            if (!db) return;
+            const userLeaderboardRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', persistentDeviceId);
             const userSnap = await window.FirebaseModule.getDoc(userLeaderboardRef);
 
             let currentWins = 0;
@@ -1388,6 +1575,10 @@
                     }
                     boardState[i] = '';
                 }
+            }
+
+            for (let i = 0; i < boardState.file_length; i++) {
+                // ...
             }
 
             for (let i = 0; i < boardState.length; i++) {
