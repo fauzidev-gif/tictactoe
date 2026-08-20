@@ -125,7 +125,6 @@
             fill: #202124;
         }
 
-        /* Badge Online Tanpa Latar dan Tanpa Border */
         .online-status-badge {
             font-size: 0.72rem;
             font-weight: 800;
@@ -136,6 +135,9 @@
             text-align: center;
             width: 100%;
             letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .board-container {
@@ -148,7 +150,7 @@
 
         .board {
             display: grid;
-            grid-gap: 10px;
+            grid-gap: 8px;
             width: min(82vw, 310px);
             height: min(82vw, 310px);
             box-sizing: border-box;
@@ -157,7 +159,7 @@
         .cell {
             background-color: var(--tile-bg);
             box-shadow: inset 0 -4px 0 var(--tile-shadow);
-            border-radius: 16px;
+            border-radius: 14px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -211,10 +213,13 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            width: calc(33.33% - 7px);
+            width: 100%;
+            max-width: 200px;
             text-align: center;
             user-select: none;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .turn-text {
@@ -228,7 +233,7 @@
             width: 100%;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            grid-gap: 10px;
+            grid-gap: 8px;
         }
 
         .score-card {
@@ -241,6 +246,7 @@
             gap: 2px;
             text-align: center;
             user-select: none;
+            overflow: hidden;
         }
 
         .score-card.x-card {
@@ -267,6 +273,10 @@
             text-transform: uppercase;
             letter-spacing: 0.4px;
             opacity: 0.9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
         }
 
         .score-num {
@@ -289,7 +299,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease;
-            padding: 20px;
+            padding: 16px;
         }
 
         .modal-overlay.active {
@@ -300,14 +310,14 @@
         .modal-card {
             background-color: #FFFFFF;
             width: 100%;
-            max-width: 330px;
+            max-width: 320px;
             border-radius: var(--radius-card);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            padding: 20px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            max-height: 88vh;
+            gap: 12px;
+            max-height: 85vh;
             overflow-y: auto;
             transform: translateY(20px) scale(0.95);
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -322,11 +332,11 @@
             justify-content: center;
             align-items: center;
             border-bottom: 1px solid #E8EAED;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
 
         .modal-title {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 800;
             color: var(--text-dark);
             text-align: center;
@@ -339,7 +349,7 @@
         }
 
         .setting-label {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 800;
             color: var(--text-sub);
             text-transform: uppercase;
@@ -357,12 +367,12 @@
 
         .option-btn {
             flex: 1;
-            padding: 8px 6px;
+            padding: 8px 4px;
             border: none;
             background: transparent;
             color: var(--text-sub);
             font-weight: 700;
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             border-radius: var(--radius-round);
             cursor: pointer;
             transition: all 0.15s ease;
@@ -384,10 +394,10 @@
 
         .room-input {
             flex: 1;
-            padding: 10px 14px;
+            padding: 9px 12px;
             border: 1px solid #DADCE0;
             border-radius: var(--radius-round);
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 700;
             text-align: center;
             text-transform: uppercase;
@@ -402,13 +412,13 @@
         }
 
         .btn-room-action {
-            padding: 10px 14px;
+            padding: 9px 12px;
             border: none;
             border-radius: var(--radius-round);
             background-color: var(--google-green);
             color: white;
             font-weight: 800;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             cursor: pointer;
             white-space: nowrap;
         }
@@ -417,10 +427,10 @@
             background-color: var(--google-blue);
             color: #FFFFFF;
             border: none;
-            padding: 12px;
+            padding: 11px;
             border-radius: var(--radius-round);
             font-weight: 800;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             cursor: pointer;
             box-shadow: 0 3px 8px rgba(66, 133, 244, 0.35);
             margin-top: 4px;
@@ -439,7 +449,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 280px;
+            max-height: 250px;
             overflow-y: auto;
             padding-right: 2px;
         }
@@ -448,7 +458,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 14px;
+            padding: 9px 12px;
             background-color: #F8F9FA;
             border-radius: 14px;
             border: 1px solid #E8EAED;
@@ -463,19 +473,21 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            overflow: hidden;
         }
 
         .rank-badge {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 900;
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             background: #E8EAED;
             color: var(--text-dark);
+            flex-shrink: 0;
         }
 
         .rank-badge.rank-1 { background: var(--google-yellow); color: #202124; }
@@ -483,15 +495,19 @@
         .rank-badge.rank-3 { background: #E09A67; color: white; }
 
         .player-name {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 700;
             color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .win-count {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 800;
             color: var(--google-green);
+            flex-shrink: 0;
         }
 
         .username-input-box {
@@ -506,12 +522,12 @@
         }
 
         @media (max-height: 600px) {
-            body { padding: 8px 12px; }
-            .container { gap: 8px; }
-            .board { width: min(72vw, 250px); height: min(72vw, 250px); grid-gap: 8px; }
+            body { padding: 6px 10px; }
+            .container { gap: 6px; }
+            .board { width: min(70vw, 240px); height: min(70vw, 240px); grid-gap: 6px; }
             .score-card { padding: 6px 2px; }
-            .score-num { font-size: 1.1rem; }
-            .btn-header-3d { width: 38px; height: 38px; }
+            .score-num { font-size: 1.05rem; }
+            .btn-header-3d { width: 36px; height: 36px; }
         }
     </style>
 </head>
@@ -526,21 +542,21 @@
             </div>
 
             <div class="header-actions">
-                <!-- Tombol Peringkat: Ikon Piala Modern SVG -->
+                <!-- Tombol Peringkat -->
                 <button class="btn-header-3d" onclick="openLeaderboardModal()" title="Peringkat Global">
                     <svg viewBox="0 0 24 24">
                         <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 10.63 21 8.55 21 6V5zm-14 3V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
                     </svg>
                 </button>
 
-                <!-- Tombol Pengaturan: Ikon Gir/Pengaturan Detail SVG -->
+                <!-- Tombol Pengaturan -->
                 <button class="btn-header-3d" onclick="openSettingsModal()" title="Pengaturan">
                     <svg viewBox="0 0 24 24">
                         <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
                     </svg>
                 </button>
 
-                <!-- Tombol Restart Game: Ikon Putar Ulang SVG -->
+                <!-- Tombol Restart Game -->
                 <button class="btn-header-3d" onclick="resetGame()" title="Ulangi Game">
                     <svg viewBox="0 0 24 24">
                         <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -549,7 +565,7 @@
             </div>
         </div>
 
-        <!-- Badge Online Tanpa Latar dan Tanpa Border -->
+        <!-- Badge Online -->
         <div id="onlineBadge" class="online-status-badge">
             ONLINE: ROOM <span id="onlineRoomCode">GLOBAL</span>
         </div>
@@ -619,8 +635,8 @@
                     <input type="text" id="inputRoomCode" class="room-input" placeholder="KODE" maxlength="6">
                     <button class="btn-room-action" onclick="joinOrCreateRoom()">Masuk</button>
                 </div>
-                <button class="btn-save" style="background-color: var(--google-green); margin-top: 4px; font-size: 0.75rem; padding: 8px;" onclick="generateRandomRoomCode()">
-                    <svg style="width:16px; height:16px; fill:#FFFFFF;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM7.5 18c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-9C6.67 9 6 8.33 6 7.5S6.67 6 7.5 6 9 6.67 9 7.5 8.33 9 7.5 9zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-9c-.83 0-1.5-.67-1.5-1.5S15.67 6 16.5 6s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                <button class="btn-save" style="background-color: var(--google-green); margin-top: 4px; font-size: 0.72rem; padding: 7px;" onclick="generateRandomRoomCode()">
+                    <svg style="width:14px; height:14px; fill:#FFFFFF;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM7.5 18c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-9C6.67 9 6 8.33 6 7.5S6.67 6 7.5 6 9 6.67 9 7.5 8.33 9 7.5 9zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-9c-.83 0-1.5-.67-1.5-1.5S15.67 6 16.5 6s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
                     Buat Kode Room Baru
                 </button>
             </div>
@@ -634,7 +650,7 @@
                 </div>
             </div>
 
-            <button class="btn-save" style="width:100%; margin-top:8px;" onclick="applySettingsAndClose()">Simpan & Mainkan</button>
+            <button class="btn-save" style="width:100%; margin-top:6px;" onclick="applySettingsAndClose()">Simpan & Mainkan</button>
         </div>
     </div>
 
@@ -649,12 +665,11 @@
                 <div style="text-align:center; font-size:0.8rem; color:var(--text-sub); padding:16px;">Memuat Peringkat...</div>
             </div>
 
-            <button class="btn-save" style="width:100%; margin-top:8px;" onclick="closeLeaderboardModal()">Tutup</button>
+            <button class="btn-save" style="width:100%; margin-top:6px;" onclick="closeLeaderboardModal()">Tutup</button>
         </div>
     </div>
 
     <script>
-        // Konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyBHQ7-xkkXutGiDROuF2XbAfS99w0ywUG4",
             authDomain: "tictactoe-a3ff0.firebaseapp.com",
@@ -843,7 +858,8 @@
 
         function setGrid(size) {
             gridSize = size;
-            winCondition = size === 3 ? 3 : 4;
+            // Papan 3x3 dan 4x4 butuh 3 & 4 berderet. 5x5 wajib 5 berderet penuh!
+            winCondition = size === 5 ? 5 : (size === 4 ? 4 : 3);
             updateToggleUI('#gridGroup', event.target);
             generateWinningCombinations();
         }
@@ -961,8 +977,10 @@
         function makeMove(index, player) {
             boardState[index] = player;
             const cell = boardEl.children[index];
-            cell.innerHTML = player === 'X' ? svgX : svgO;
-            cell.classList.add('occupied');
+            if (cell) {
+                cell.innerHTML = player === 'X' ? svgX : svgO;
+                cell.classList.add('occupied');
+            }
 
             playSound(player.toLowerCase());
 
@@ -1115,9 +1133,7 @@
         async function joinOrCreateRoom() {
             if (!user || !db) return;
             const roomCode = inputRoomCode.value.trim().toUpperCase();
-            if (!roomCode) {
-                return;
-            }
+            if (!roomCode) return;
 
             leaveOnlineRoom();
             closeSettingsModal();
@@ -1174,6 +1190,14 @@
                 if (!docSnap.exists()) return;
                 const data = docSnap.data();
 
+                // Cek jika lawan keluar / disconnect saat bermain
+                if (data.status === 'playing' && data.playerX && data.playerO) {
+                    if ((myRole === 'X' && !data.playerO) || (myRole === 'O' && !data.playerX)) {
+                        handleOpponentDisconnect(data.isGlobal);
+                        return;
+                    }
+                }
+
                 gridSize = data.gridSize;
                 winCondition = data.winCondition;
                 generateWinningCombinations();
@@ -1183,14 +1207,15 @@
                 }
 
                 data.boardState.forEach((val, idx) => {
-                    if (boardState[idx] !== val) {
-                        boardState[idx] = val;
+                    boardState[idx] = val;
+                    const cell = boardEl.children[idx];
+                    if (cell) {
                         if (val !== '') {
-                            const cell = boardEl.children[idx];
-                            if (cell) {
-                                cell.innerHTML = val === 'X' ? svgX : svgO;
-                                cell.classList.add('occupied');
-                            }
+                            cell.innerHTML = val === 'X' ? svgX : svgO;
+                            cell.classList.add('occupied');
+                        } else {
+                            cell.innerHTML = '';
+                            cell.classList.remove('occupied', 'winning-cell');
                         }
                     }
                 });
@@ -1217,6 +1242,20 @@
                     }
                 }
             });
+        }
+
+        async function handleOpponentDisconnect(isGlobal) {
+            leaveOnlineRoom();
+            if (isGlobal) {
+                turnText.innerText = 'LAWAN KELUAR, MENCARI...';
+                setTimeout(() => { findGlobalMatch(); }, 1500);
+            } else {
+                turnText.innerText = 'ROOM DIBUBARKAN!';
+                setTimeout(() => {
+                    gameMode = 'ai';
+                    resetGame();
+                }, 2000);
+            }
         }
 
         async function makeOnlineMove(index) {
@@ -1314,19 +1353,22 @@
         }
 
         function makeAIMove() {
-            if (!gameActive) return;
+            if (!gameActive || currentPlayer !== 'O') return;
             let moveIndex;
 
             if (aiDifficulty === 'easy') {
                 moveIndex = getRandomMove();
             } else if (aiDifficulty === 'medium') {
-                moveIndex = Math.random() > 0.4 ? getHeuristicMove() : getRandomMove();
+                moveIndex = Math.random() > 0.3 ? getHeuristicMove() : getRandomMove();
             } else {
                 moveIndex = getHeuristicMove();
             }
 
-            if (moveIndex !== null && moveIndex !== undefined) {
+            if (moveIndex !== null && moveIndex !== undefined && boardState[moveIndex] === '') {
                 makeMove(moveIndex, 'O');
+            } else {
+                moveIndex = getRandomMove();
+                if (moveIndex !== null) makeMove(moveIndex, 'O');
             }
         }
 
@@ -1342,7 +1384,7 @@
                     boardState[i] = 'O';
                     if (checkWinningState('O')) {
                         boardState[i] = '';
-                        return;
+                        return i;
                     }
                     boardState[i] = '';
                 }
@@ -1409,3 +1451,4 @@
     </script>
 </body>
 </html>
+
