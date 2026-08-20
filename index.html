@@ -28,6 +28,7 @@
             --google-yellow: #FBBC05;
             --google-yellow-dark: #D9A000;
             --google-green: #34A853;
+            --google-red: #EA4335;
             --bg-color: #F8F9FA;
             --tile-bg: #FFFFFF;
             --tile-border: #E8EAED;
@@ -117,10 +118,11 @@
             background-color: var(--flat-gray-hover);
         }
 
-        .btn-header-flat img {
+        .btn-header-flat svg, .btn-header-flat img {
             width: 22px;
             height: 22px;
             object-fit: contain;
+            display: block;
         }
 
         .online-status-badge {
@@ -212,7 +214,7 @@
             justify-content: center;
             gap: 6px;
             width: 100%;
-            max-width: 200px;
+            max-width: 260px;
             text-align: center;
             user-select: none;
             white-space: nowrap;
@@ -417,6 +419,11 @@
             font-size: 0.72rem;
             cursor: pointer;
             white-space: nowrap;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-room-action.exit-mode {
+            background-color: var(--google-red);
         }
 
         .btn-save {
@@ -439,6 +446,12 @@
 
         .btn-save:active {
             background-color: var(--google-blue-dark);
+        }
+
+        .global-exit-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
         }
 
         .leaderboard-list {
@@ -506,53 +519,69 @@
             flex-shrink: 0;
         }
 
-        /* Chat Styles */
+        /* Modern Chat Styles */
         .chat-messages {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
             max-height: 220px;
             overflow-y: auto;
-            padding: 4px;
-            background: #F8F9FA;
-            border-radius: 14px;
-            border: 1px solid #E8EAED;
+            padding: 8px 4px;
+            background: transparent;
+        }
+
+        .chat-bubble-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 82%;
+        }
+
+        .chat-bubble-container.mine {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .chat-bubble-container.theirs {
+            align-self: flex-start;
+            align-items: flex-start;
         }
 
         .chat-bubble {
             padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 0.78rem;
-            max-width: 85%;
+            font-size: 0.8rem;
+            font-weight: 500;
+            line-height: 1.35;
             word-break: break-word;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            transition: all 0.15s ease;
         }
 
-        .chat-bubble.mine {
-            background-color: #E8F0FE;
-            color: #174EA6;
-            align-self: flex-end;
-            border-bottom-right-radius: 2px;
+        .chat-bubble-container.mine .chat-bubble {
+            background-color: var(--google-blue);
+            color: #FFFFFF;
+            border-radius: 18px 18px 4px 18px;
         }
 
-        .chat-bubble.theirs {
-            background-color: #FFFFFF;
-            color: #202124;
-            align-self: flex-start;
-            border: 1px solid #E8EAED;
-            border-bottom-left-radius: 2px;
+        .chat-bubble-container.theirs .chat-bubble {
+            background-color: #F1F3F4;
+            color: var(--text-dark);
+            border: 1px solid var(--tile-border);
+            border-radius: 18px 18px 18px 4px;
         }
 
         .chat-sender {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             font-weight: 800;
             margin-bottom: 2px;
-            opacity: 0.8;
+            padding: 0 4px;
+            color: var(--text-sub);
+            letter-spacing: 0.3px;
         }
 
         .chat-input-row {
             display: flex;
             gap: 6px;
-            margin-top: 4px;
+            margin-top: 6px;
         }
 
         .chat-input {
@@ -621,23 +650,23 @@
             <div class="header-actions">
                 <!-- Tombol Chat: CHAT.PNG -->
                 <button class="btn-header-flat hidden" id="btnChatToggle" onclick="openChatModal()" title="Obrolan">
-                    <img src="CHAT.PNG" alt="Chat" onerror="this.style.display='none'">
+                    <img src="CHAT.PNG" alt="Chat" onerror="this.outerHTML='<svg viewBox=\'0 0 24 24\' width=\'20\' height=\'20\' fill=\'#5F6368\'><path d=\'M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z\'/></svg>'">
                     <span id="chatBadge" class="notification-badge hidden">0</span>
                 </button>
 
                 <!-- Tombol Peringkat: PIALA.PNG -->
                 <button class="btn-header-flat" onclick="openLeaderboardModal()" title="Peringkat Global">
-                    <img src="PIALA.PNG" alt="Piala" onerror="this.style.display='none'">
+                    <img src="PIALA.PNG" alt="Piala" onerror="this.outerHTML='<svg viewBox=\'0 0 24 24\' width=\'20\' height=\'20\' fill=\'#5F6368\'><path d=\'M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.4 4.94C8.63 13.7 10.24 15.36 11 16.6V19H8v2h8v-2h-3v-2.4c.76-1.24 2.37-2.9 3.6-5.66C19.08 10.63 21 8.55 21 6V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z\'/></svg>'">
                 </button>
 
                 <!-- Tombol Pengaturan: GEAR.PNG -->
                 <button class="btn-header-flat" onclick="openSettingsModal()" title="Pengaturan">
-                    <img src="GEAR.PNG" alt="Pengaturan" onerror="this.style.display='none'">
+                    <img src="GEAR.PNG" alt="Pengaturan" onerror="this.outerHTML='<svg viewBox=\'0 0 24 24\' width=\'20\' height=\'20\' fill=\'#5F6368\'><path d=\'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z\'/></svg>'">
                 </button>
 
-                <!-- Tombol Restart Game: MUATULANG.PNG -->
-                <button class="btn-header-flat" onclick="resetGame()" title="Ulangi Game">
-                    <img src="MUATULANG.PNG" alt="Ulangi" onerror="this.style.display='none'">
+                <!-- Tombol Restart Game: MUATULANG.PNG (Hanya untuk 2 Pemain) -->
+                <button class="btn-header-flat" id="btnHeaderReset" onclick="resetGame()" title="Ulangi Game">
+                    <img src="MUATULANG.PNG" alt="Ulangi" onerror="this.outerHTML='<svg viewBox=\'0 0 24 24\' width=\'20\' height=\'20\' fill=\'#5F6368\'><path d=\'M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z\'/></svg>'">
                 </button>
             </div>
         </div>
@@ -710,11 +739,19 @@
                 <span class="setting-label">Room Jarak Jauh</span>
                 <div class="room-input-box">
                     <input type="text" id="inputRoomCode" class="room-input" placeholder="KODE" maxlength="6">
-                    <button class="btn-room-action" onclick="joinOrCreateRoom()">Masuk</button>
+                    <button class="btn-room-action" id="btnRoomJoinExit" onclick="toggleRoomJoinExit()">Masuk</button>
                 </div>
-                <button class="btn-save" style="background-color: var(--google-green); margin-top: 4px; font-size: 0.72rem; padding: 7px;" onclick="generateRandomRoomCode()">
+                <button class="btn-save" id="btnCreateNewRoom" style="background-color: var(--google-green); margin-top: 4px; font-size: 0.72rem; padding: 7px;" onclick="generateRandomRoomCode()">
                     Buat Kode Room Baru
                 </button>
+            </div>
+
+            <div class="setting-section hidden" id="globalSection">
+                <span class="setting-label">Cari Lawan Global</span>
+                <div class="global-exit-row" id="globalActionRow">
+                    <button class="btn-room-action" id="btnGlobalStart" style="flex:1; background-color: var(--google-green);" onclick="findGlobalMatch()">Cari Sekarang</button>
+                    <button class="btn-room-action exit-mode" id="btnGlobalExit" style="display:none; flex:1;" onclick="leaveOnlineRoomModal()">Keluar</button>
+                </div>
             </div>
 
             <div class="setting-section" id="difficultySection">
@@ -726,7 +763,7 @@
                 </div>
             </div>
 
-            <button class="btn-save" style="width:100%; margin-top:6px;" onclick="applySettingsAndClose()">Simpan & Mainkan</button>
+            <button class="btn-save" id="btnApplySettings" style="width:100%; margin-top:6px;" onclick="applySettingsAndClose()">Simpan & Mainkan</button>
         </div>
     </div>
 
@@ -921,6 +958,7 @@
         let gameActive = true;
         let winningCombinations = [];
         let scores = { X: 0, O: 0, draw: 0 };
+        let autoResetTimeout = null;
 
         let db = null;
         let auth = null;
@@ -928,6 +966,7 @@
         let currentRoomId = null;
         let myRole = 'X';
         let roomUnsubscribe = null;
+        let isRoomJoined = false;
         let username = localStorage.getItem('tictactoe_username') || ('Pemain_' + Math.floor(100 + Math.random() * 900));
 
         const boardEl = document.getElementById('board');
@@ -939,6 +978,7 @@
         const titleO = document.getElementById('titleO');
         const difficultySection = document.getElementById('difficultySection');
         const roomSection = document.getElementById('roomSection');
+        const globalSection = document.getElementById('globalSection');
         const onlineBadge = document.getElementById('onlineBadge');
         const onlineRoomCode = document.getElementById('onlineRoomCode');
         const inputUsername = document.getElementById('inputUsername');
@@ -947,9 +987,16 @@
         const btnChatToggle = document.getElementById('btnChatToggle');
         const chatMessagesList = document.getElementById('chatMessagesList');
         const inputChatMessage = document.getElementById('inputChatMessage');
+        const btnRoomJoinExit = document.getElementById('btnRoomJoinExit');
+        const btnCreateNewRoom = document.getElementById('btnCreateNewRoom');
+        const btnGlobalStart = document.getElementById('btnGlobalStart');
+        const btnGlobalExit = document.getElementById('btnGlobalExit');
+        const btnApplySettings = document.getElementById('btnApplySettings');
+        const btnHeaderReset = document.getElementById('btnHeaderReset');
 
         window.addEventListener('DOMContentLoaded', async () => {
             inputUsername.value = username;
+            updateHeaderResetVisibility();
 
             if (window.FirebaseModule && firebaseConfig) {
                 const app = window.FirebaseModule.initializeApp(firebaseConfig);
@@ -963,6 +1010,14 @@
                 });
             }
         });
+
+        function updateHeaderResetVisibility() {
+            if (gameMode === 'pvp') {
+                btnHeaderReset.style.display = 'flex';
+            } else {
+                btnHeaderReset.style.display = 'none';
+            }
+        }
 
         function saveUsername() {
             const val = inputUsername.value.trim();
@@ -991,23 +1046,38 @@
         function setMode(mode) {
             gameMode = mode;
             updateToggleUI('#modeGroup', event.target);
+            updateHeaderResetVisibility();
 
             if (mode === 'ai') {
                 difficultySection.classList.remove('hidden');
                 roomSection.classList.add('hidden');
+                globalSection.classList.add('hidden');
+                btnApplySettings.style.display = 'block';
                 titleX.innerText = 'X (YOU)';
                 titleO.innerText = 'O (CPU)';
             } else if (mode === 'pvp') {
                 difficultySection.classList.add('hidden');
                 roomSection.classList.add('hidden');
+                globalSection.classList.add('hidden');
+                btnApplySettings.style.display = 'block';
                 titleX.innerText = 'PEMAIN X';
                 titleO.innerText = 'PEMAIN O';
             } else if (mode === 'global') {
                 difficultySection.classList.add('hidden');
                 roomSection.classList.add('hidden');
+                globalSection.classList.remove('hidden');
+                btnApplySettings.style.display = 'none';
+                btnGlobalStart.style.display = 'block';
+                btnGlobalExit.style.display = 'none';
             } else if (mode === 'room') {
                 difficultySection.classList.add('hidden');
                 roomSection.classList.remove('hidden');
+                globalSection.classList.add('hidden');
+                btnApplySettings.style.display = 'none';
+                btnRoomJoinExit.innerText = 'Masuk';
+                btnRoomJoinExit.classList.remove('exit-mode');
+                btnCreateNewRoom.style.display = 'flex';
+                inputRoomCode.disabled = false;
                 if (!inputRoomCode.value) generateRandomRoomCode();
             }
 
@@ -1064,6 +1134,11 @@
         }
 
         function buildBoard() {
+            if (autoResetTimeout) {
+                clearTimeout(autoResetTimeout);
+                autoResetTimeout = null;
+            }
+
             boardEl.innerHTML = '';
             boardEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
             boardEl.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
@@ -1084,6 +1159,7 @@
             if (boardState[index] !== '' || !gameActive) return;
 
             if (gameMode === 'global' || gameMode === 'room') {
+                if (!gameActive) return;
                 if (currentPlayer !== myRole) return;
                 makeOnlineMove(index);
                 return;
@@ -1118,12 +1194,15 @@
             }
         }
 
+        /* FUNGSI UTAMA PENENTU TEKS INDIKATOR KONSISTEN SESUAI SITUASI REALTIME */
         function updateStatus() {
             if (gameMode === 'global' || gameMode === 'room') {
+                if (!gameActive) return; // Jika game selesai atau belum mulai, biarkan status akhir yang tampil
+                
                 if (currentPlayer === myRole) {
-                    turnText.innerText = 'GILIRANMU!';
+                    turnText.innerText = `GILIRANMU (${myRole})!`;
                 } else {
-                    turnText.innerText = 'Lawan...';
+                    turnText.innerText = `GILIRAN LAWAN (${currentPlayer})...`;
                 }
             } else {
                 turnText.innerText = `GILIRAN ${currentPlayer}`;
@@ -1158,13 +1237,30 @@
                 scores[winner]++;
                 if (winner === 'X') {
                     scoreXEl.innerText = scores.X;
-                    turnText.innerText = 'X MENANG!';
+                    turnText.innerText = gameMode === 'ai' ? 'X MENANG!' : (gameMode === 'pvp' ? 'PEMAIN X MENANG!' : (myRole === 'X' ? 'KAMU MENANG!' : 'LAWAN MENANG!'));
                 } else {
                     scoreOEl.innerText = scores.O;
-                    turnText.innerText = 'O MENANG!';
+                    turnText.innerText = gameMode === 'ai' ? 'CPU MENANG!' : (gameMode === 'pvp' ? 'PEMAIN O MENANG!' : (myRole === 'O' ? 'KAMU MENANG!' : 'LAWAN MENANG!'));
                 }
                 playSound('win');
             }
+
+            // OTOMATIS MUAT ULANG PAPAN SETELAH MENANG/SERI
+            autoResetTimeout = setTimeout(() => {
+                if (gameMode === 'global' || gameMode === 'room') {
+                    if (currentRoomId && db) {
+                        const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
+                        window.FirebaseModule.updateDoc(roomRef, {
+                            boardState: Array(gridSize * gridSize).fill(''),
+                            currentPlayer: 'X',
+                            winner: null,
+                            status: 'playing'
+                        }).catch(() => {});
+                    }
+                } else {
+                    resetGame();
+                }
+            }, 2500);
         }
 
         function resetGame() {
@@ -1186,6 +1282,14 @@
         }
 
         function leaveOnlineRoom() {
+            if (currentRoomId && db) {
+                const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
+                window.FirebaseModule.updateDoc(roomRef, {
+                    status: 'ended',
+                    winner: 'disconnected'
+                }).catch(() => {});
+            }
+
             if (roomUnsubscribe) {
                 roomUnsubscribe();
                 roomUnsubscribe = null;
@@ -1193,16 +1297,54 @@
             currentRoomId = null;
             onlineBadge.style.display = 'none';
             btnChatToggle.classList.add('hidden');
+            isRoomJoined = false;
+            
+            if (gameMode === 'room') {
+                generateRandomRoomCode();
+            }
+
+            resetScore();
+
+            btnRoomJoinExit.innerText = 'Masuk';
+            btnRoomJoinExit.classList.remove('exit-mode');
+            btnCreateNewRoom.style.display = 'flex';
+            inputRoomCode.disabled = false;
+
+            btnGlobalStart.style.display = 'block';
+            btnGlobalExit.style.display = 'none';
+
+            buildBoard();
+        }
+
+        function leaveOnlineRoomModal() {
+            leaveOnlineRoom();
+            closeSettingsModal();
+            resetGame();
+        }
+
+        function toggleRoomJoinExit() {
+            if (!isRoomJoined) {
+                joinOrCreateRoom();
+            } else {
+                leaveOnlineRoom();
+                turnText.innerText = 'ROOM DIBUBARKAN';
+                buildBoard();
+            }
         }
 
         async function findGlobalMatch() {
             if (!db) return;
+            saveUsername();
             leaveOnlineRoom();
 
             onlineBadge.style.display = 'block';
-            onlineRoomCode.innerText = 'GLOBAL';
-            turnText.innerText = 'Mencari...';
+            onlineRoomCode.innerText = 'GLOBAL (MENCARI...)';
+            turnText.innerText = 'MENCARI LAWAN...';
             btnChatToggle.classList.remove('hidden');
+            btnGlobalStart.style.display = 'none';
+            btnGlobalExit.style.display = 'block';
+            closeSettingsModal();
+            buildBoard();
 
             const publicCol = window.FirebaseModule.collection(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms');
             const q = window.FirebaseModule.query(publicCol);
@@ -1259,11 +1401,11 @@
 
         async function joinOrCreateRoom() {
             if (!db) return;
+            saveUsername();
             const roomCode = inputRoomCode.value.trim().toUpperCase();
             if (!roomCode) return;
 
             leaveOnlineRoom();
-            closeSettingsModal();
 
             currentRoomId = 'R_' + roomCode;
             const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', currentRoomId);
@@ -1273,6 +1415,11 @@
 
             if (roomSnap.exists()) {
                 const data = roomSnap.data();
+                if (data.status === 'ended') {
+                    alert('Room dengan kode ini telah dibubarkan dan tidak dapat digunakan lagi.');
+                    generateRandomRoomCode();
+                    return;
+                }
                 if (!data.playerO && data.playerX !== persistentDeviceId) {
                     myRole = 'O';
                     titleX.innerText = 'LAWAN (X)';
@@ -1308,8 +1455,16 @@
                 });
             }
 
+            isRoomJoined = true;
+            btnRoomJoinExit.innerText = 'Keluar';
+            btnRoomJoinExit.classList.add('exit-mode');
+            btnCreateNewRoom.style.display = 'none';
+            inputRoomCode.disabled = true;
+
             onlineBadge.style.display = 'block';
             onlineRoomCode.innerText = roomCode;
+            closeSettingsModal();
+            buildBoard();
             subscribeToRoom(currentRoomId);
         }
 
@@ -1319,12 +1474,20 @@
             const roomRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'tic_tac_toe_rooms', roomId);
 
             roomUnsubscribe = window.FirebaseModule.onSnapshot(roomRef, (docSnap) => {
-                if (!docSnap.exists()) return;
+                if (!docSnap.exists()) {
+                    handleOpponentDisconnect();
+                    return;
+                }
                 const data = docSnap.data();
+
+                if (data.status === 'ended' || data.winner === 'disconnected') {
+                    handleOpponentDisconnect();
+                    return;
+                }
 
                 if (data.status === 'playing' && data.playerX && data.playerO) {
                     if ((myRole === 'X' && !data.playerO) || (myRole === 'O' && !data.playerX)) {
-                        handleOpponentDisconnect(data.isGlobal);
+                        handleOpponentDisconnect();
                         return;
                     }
                 }
@@ -1352,15 +1515,31 @@
                 });
 
                 currentPlayer = data.currentPlayer;
-                gameActive = data.status === 'playing' || data.status === 'waiting';
 
+                /* PERBAIKAN INDIKATOR STATUS - KONSISTEN DENGAN KONDISI ONLINE REALTIME */
                 if (data.status === 'waiting') {
-                    turnText.innerText = 'MENUNGGU LAWAN...';
+                    gameActive = false;
+                    if (data.isGlobal) {
+                        onlineRoomCode.innerText = 'GLOBAL (MENCARI...)';
+                        turnText.innerText = 'MENCARI LAWAN...';
+                    } else {
+                        onlineRoomCode.innerText = `${data.roomCode} (MENUNGGU)`;
+                        turnText.innerText = 'MENUNGGU LAWAN MASUK...';
+                    }
                 } else if (data.status === 'playing') {
-                    updateStatus();
+                    gameActive = true;
+                    if (data.isGlobal) {
+                        onlineRoomCode.innerText = 'GLOBAL (BERMAIN)';
+                    } else {
+                        onlineRoomCode.innerText = `${data.roomCode}`;
+                    }
+                    
+                    if (!data.winner) {
+                        updateStatus();
+                    }
                 }
 
-                if (data.winner) {
+                if (data.winner && data.winner !== 'disconnected') {
                     gameActive = false;
                     if (data.winner === 'draw') {
                         turnText.innerText = 'HASIL SERI!';
@@ -1397,11 +1576,11 @@
             let html = '';
             chats.forEach(msg => {
                 const isMine = msg.senderId === persistentDeviceId;
-                const bubbleClass = isMine ? 'mine' : 'theirs';
+                const alignClass = isMine ? 'mine' : 'theirs';
                 html += `
-                    <div class="chat-bubble ${bubbleClass}">
+                    <div class="chat-bubble-container ${alignClass}">
                         <div class="chat-sender">${isMine ? 'Kamu' : (msg.senderName || 'Lawan')}</div>
-                        <div>${escapeHtml(msg.text)}</div>
+                        <div class="chat-bubble">${escapeHtml(msg.text)}</div>
                     </div>
                 `;
             });
@@ -1431,18 +1610,17 @@
             });
         }
 
-        async function handleOpponentDisconnect(isGlobal) {
+        async function handleOpponentDisconnect() {
             leaveOnlineRoom();
-            if (isGlobal) {
-                turnText.innerText = 'LAWAN KELUAR, MENCARI...';
-                setTimeout(() => { findGlobalMatch(); }, 1500);
-            } else {
-                turnText.innerText = 'ROOM DIBUBARKAN!';
-                setTimeout(() => {
+            turnText.innerText = 'ROOM DIBUBARKAN';
+            buildBoard();
+            setTimeout(() => {
+                if (gameMode === 'global' || gameMode === 'room') {
                     gameMode = 'ai';
-                    resetGame();
-                }, 2000);
-            }
+                    updateHeaderResetVisibility();
+                }
+                resetGame();
+            }, 1800);
         }
 
         async function makeOnlineMove(index) {
@@ -1575,10 +1753,6 @@
                     }
                     boardState[i] = '';
                 }
-            }
-
-            for (let i = 0; i < boardState.file_length; i++) {
-                // ...
             }
 
             for (let i = 0; i < boardState.length; i++) {
